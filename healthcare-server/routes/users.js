@@ -4,6 +4,7 @@ const { check } = require('express-validator');
 const validate = require('../middleware/validate');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const Doctor = require('../models/Doctor');
 
 router.post(
   '/register',
@@ -11,16 +12,27 @@ router.post(
     check('email').isEmail().withMessage('Invalid email'),
     check('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     check('name').notEmpty().withMessage('Name is required'),
-    check('role').isIn(['patient', 'doctor', 'admin']).withMessage('Invalid role'),
+    check('role').isIn(['patient', 'doctor']).withMessage('Role must be patient or doctor'),
+    check('specialty').if(check('role').equals('doctor')).notEmpty().withMessage('Specialty is required for doctors'),
   ]),
   async (req, res) => {
     try {
-      const { email, password, name, role } = req.body;
+      const { email, password, name, role, specialty } = req.body;
       let user = await User.findOne({ email });
       if (user) return res.status(400).json({ error: 'User already exists' });
 
       user = new User({ email, password, name, role });
       await user.save();
+
+      if (role === 'doctor') {
+        const doctor = new Doctor({
+          userId: user._id,
+          name,
+          specialty: specialty || 'General Practice',
+          availability: [],
+        });
+        await doctor.save();
+      }
 
       const token = jwt.sign({ _id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
       res.status(201).json({ user: { _id: user._id, email, name, role }, token });

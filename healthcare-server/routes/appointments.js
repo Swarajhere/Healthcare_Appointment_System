@@ -5,6 +5,7 @@ const validate = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
+const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 
 router.post(
@@ -21,6 +22,13 @@ router.post(
   async (req, res) => {
     try {
       const { doctorId, date, startTime, endTime } = req.body;
+
+      // Restrict to next day
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      if (date !== tomorrowStr) return res.status(400).json({ error: 'Bookings are only allowed for tomorrow' });
+
       const doctor = await Doctor.findById(doctorId);
       if (!doctor) return res.status(404).json({ error: 'Doctor not found' });
 

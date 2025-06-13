@@ -12,19 +12,18 @@ function Register() {
     password: "",
     name: "",
     role: "patient",
+    specialty: "",
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(register(formData));
+    const submitData =
+      formData.role === "doctor"
+        ? formData
+        : { ...formData, specialty: undefined };
+    const result = await dispatch(register(submitData));
     if (register.fulfilled.match(result)) {
-      navigate(
-        result.payload.user.role === "patient"
-          ? "/patient"
-          : result.payload.user.role === "doctor"
-          ? "/doctor"
-          : "/admin"
-      );
+      navigate(result.payload.user.role === "patient" ? "/patient" : "/doctor");
     }
   };
 
@@ -40,6 +39,7 @@ function Register() {
             className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
           />
         </div>
         <div>
@@ -51,6 +51,7 @@ function Register() {
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
             }
+            required
           />
         </div>
         <div>
@@ -62,6 +63,7 @@ function Register() {
             onChange={(e) =>
               setFormData({ ...formData, password: e.target.value })
             }
+            required
           />
         </div>
         <div>
@@ -70,12 +72,27 @@ function Register() {
             className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            required
           >
             <option value="patient">Patient</option>
             <option value="doctor">Doctor</option>
-            <option value="admin">Admin</option>
           </select>
         </div>
+        {formData.role === "doctor" && (
+          <div>
+            <label className="block text-gray-700">Specialization</label>
+            <input
+              type="text"
+              className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.specialty}
+              onChange={(e) =>
+                setFormData({ ...formData, specialty: e.target.value })
+              }
+              placeholder="e.g., Cardiology, Pediatrics"
+              required
+            />
+          </div>
+        )}
         <button
           type="submit"
           className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"

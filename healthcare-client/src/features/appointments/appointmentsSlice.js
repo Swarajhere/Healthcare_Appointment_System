@@ -10,6 +10,18 @@ export const fetchDoctors = createAsyncThunk('appointments/fetchDoctors', async 
   }
 });
 
+export const fetchAvailableSlots = createAsyncThunk(
+  'appointments/fetchAvailableSlots',
+  async ({ doctorId }, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/doctors/${doctorId}/availability`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch available slots');
+    }
+  }
+);
+
 export const bookAppointment = createAsyncThunk(
   'appointments/bookAppointment',
   async ({ doctorId, date, startTime, endTime }, { getState, rejectWithValue }) => {
@@ -47,7 +59,7 @@ export const fetchAppointments = createAsyncThunk(
 
 const appointmentsSlice = createSlice({
   name: 'appointments',
-  initialState: { doctors: [], appointments: [], loading: false, error: null },
+  initialState: { doctors: [], appointments: [], availableSlots: [], loading: false, error: null },
   reducers: {},
   extraReducers: (builder) => {
     builder
@@ -60,6 +72,18 @@ const appointmentsSlice = createSlice({
         state.doctors = action.payload;
       })
       .addCase(fetchDoctors.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchAvailableSlots.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAvailableSlots.fulfilled, (state, action) => {
+        state.loading = false;
+        state.availableSlots = action.payload;
+      })
+      .addCase(fetchAvailableSlots.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
