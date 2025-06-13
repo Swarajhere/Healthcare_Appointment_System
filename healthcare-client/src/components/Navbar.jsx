@@ -9,7 +9,7 @@ const Navbar = () => {
             <span className="text-xl font-bold">HealthCare System</span>
           </div>
           <div className="flex items-center space-x-4">
-            <a href="/" className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            <a href="/home" className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Home
             </a>
             <a href="/services" className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
