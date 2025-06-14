@@ -1,44 +1,36 @@
 import React from "react";
+import { Heart } from "lucide-react";
 
 const Navbar = () => {
   // Mock login state (replace with actual auth logic, e.g., context or redux)
   const isLoggedIn = false;
 
   return (
-    <nav className="bg-blue-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center">
-            <span className="text-2xl font-bold">CareConnect Hospital</span>
+    <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Heart className="h-8 w-8 text-blue-600" />
+            <span className="text-2xl font-bold text-gray-800">
+              CareConnect
+            </span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-8">
             <a
-              href="/home"
-              className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              Home
-            </a>
-            <a
-              href="/services"
-              className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              href="#services"
+              className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
             >
               Services
             </a>
             <a
-              href="/doctors"
-              className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              href="#about"
+              className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
             >
-              Doctors
+              About
             </a>
             <a
-              href="/appointments"
-              className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              Appointments
-            </a>
-            <a
-              href="/contact"
-              className="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              href="#contact"
+              className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
             >
               Contact
             </a>
@@ -46,28 +38,31 @@ const Navbar = () => {
               <>
                 <a
                   href="/profile"
-                  className="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
                 >
                   Profile
                 </a>
                 <a
                   href="/logout"
-                  className="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
                 >
                   Logout
                 </a>
+                <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
+                  Book Appointment
+                </button>
               </>
             ) : (
               <>
                 <a
                   href="/login"
-                  className="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
                 >
                   Login
                 </a>
                 <a
                   href="/register"
-                  className="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
                 >
                   Register
                 </a>
