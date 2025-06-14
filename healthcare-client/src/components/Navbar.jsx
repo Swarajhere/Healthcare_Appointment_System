@@ -1,9 +1,12 @@
 import React from "react";
 import { Heart } from "lucide-react";
+import { useSelector } from "react-redux";
+
 
 const Navbar = () => {
   // Mock login state (replace with actual auth logic, e.g., context or redux)
-  const isLoggedIn = false;
+  // const isLoggedIn = false;
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">

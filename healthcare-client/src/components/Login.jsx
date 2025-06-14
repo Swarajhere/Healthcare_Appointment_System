@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { loginUser } from '../api/login';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 const Login = () => {
-  const [email, setEmail] = useState('');        // changed from username to email
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,14 +17,22 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await loginUser({ email, password });  // send email instead of username
+      const response = await loginUser({ email, password });
       if (response.success) {
+        toast.success(response.message || 'Login successful');
         console.log('Login successful:', response.message);
+
+        // Redirect after 2 seconds
+        setTimeout(() => {
+          navigate('/home');
+        }, 2000);
       } else {
         setError(response.message || 'Login failed');
+        toast.error(response.message || 'Login failed');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

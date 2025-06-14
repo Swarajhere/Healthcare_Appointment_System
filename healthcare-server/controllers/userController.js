@@ -48,38 +48,63 @@ exports.loginUser = async (req, res) => {
 
 exports.registerUser = async (req, res) => {
   try {
-    console.log('Incoming request body:', req.body); // ✅ Debug log
-
     const { firstName, lastName, email, password, age, gender } = req.body;
 
-    // 1. Validate input
-    if (!firstName || !lastName || !email || !password || !age || !gender) {
+    // Trim inputs to remove accidental spaces
+    const trimmedFirstName = firstName?.trim();
+    const trimmedLastName = lastName?.trim();
+    const trimmedEmail = email?.trim().toLowerCase();
+
+    // 1. Basic field validation
+    if (!trimmedFirstName || !trimmedLastName || !trimmedEmail || !password || !age || !gender) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    // 2. Check for existing user
-    const existingUser = await User.findOne({ email });
+    // 2. Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
+    // 3. Password strength validation
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    // 4. Age validation
+    const parsedAge = parseInt(age, 10);
+    if (isNaN(parsedAge) || parsedAge <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid age provided' });
+    }
+
+    // 5. Gender validation
+    if (!['Male', 'Female'].includes(gender)) {
+      return res.status(400).json({ success: false, message: 'Invalid gender value' });
+    }
+
+    // 6. Check for existing user
+    const existingUser = await User.findOne({ email: trimmedEmail });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    // 3. Hash the password
+    // 7. Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 4. Create user
+    // 8. Create and save user
     const newUser = new User({
-      firstName,
-      lastName,
-      email,
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
+      email: trimmedEmail,
       password: hashedPassword,
-      age,
+      age: parsedAge,
       gender
     });
 
     await newUser.save();
 
-    // 5. Respond with success
+    // 9. Return success
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -92,6 +117,7 @@ exports.registerUser = async (req, res) => {
         gender: newUser.gender
       }
     });
+
   } catch (err) {
     console.error('❌ Register Route Error:', err.message);
     res.status(500).json({ success: false, message: 'Internal Server Error' });

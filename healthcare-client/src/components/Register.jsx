@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { registerUser } from '../api/register';
+import { toast } from 'react-hot-toast';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -11,8 +12,11 @@ const Register = () => {
     gender: '',
     password: '',
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,17 +29,30 @@ const Register = () => {
 
     try {
       const response = await registerUser(formData);
+
       if (response.success) {
-        console.log('Registration successful:', response.message);
+        toast.success(response.message || 'Registration successful');
+
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } else {
-        setError(response.message || 'Registration failed');
+        // Server responded with an expected error (like validation or duplicate email)
+        const errorMessage = response.message || 'Registration failed';
+        setError(errorMessage);
+        toast.error(errorMessage);
       }
+
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      // If error was thrown by axios and handled in API file
+      const apiErrorMessage = err.message || 'An unexpected error occurred';
+      setError(apiErrorMessage);
+      toast.error(apiErrorMessage);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -44,9 +61,7 @@ const Register = () => {
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-              First Name
-            </label>
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">First Name</label>
             <input
               type="text"
               id="firstName"
@@ -59,9 +74,7 @@ const Register = () => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-              Last Name
-            </label>
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
             <input
               type="text"
               id="lastName"
@@ -74,9 +87,7 @@ const Register = () => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
               id="email"
@@ -89,9 +100,7 @@ const Register = () => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="age" className="block text-sm font-medium text-gray-700">
-              Age
-            </label>
+            <label htmlFor="age" className="block text-sm font-medium text-gray-700">Age</label>
             <input
               type="number"
               id="age"
@@ -105,9 +114,7 @@ const Register = () => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
-              Gender
-            </label>
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-700">Gender</label>
             <select
               id="gender"
               name="gender"
@@ -116,17 +123,13 @@ const Register = () => {
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               required
             >
-              <option value="" disabled>
-                Select gender
-              </option>
+              <option value="" disabled>Select gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
           </div>
           <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
             <input
               type="password"
               id="password"
