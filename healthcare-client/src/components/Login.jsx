@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { loginUser } from '../api/login';
 import { NavLink } from 'react-router-dom';
 
-
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');        // changed from username to email
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +14,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await loginUser({ username, password });
+      const response = await loginUser({ email, password });  // send email instead of username
       if (response.success) {
         console.log('Login successful:', response.message);
       } else {
@@ -35,16 +34,16 @@ const Login = () => {
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Username
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email
             </label>
             <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your username"
+              placeholder="Enter your email"
               required
             />
           </div>

@@ -1,11 +1,11 @@
 import axios from 'axios';
-// console.log(import.meta.env.VITE_APP_API_URL);
+
 const API_URL = import.meta.env.VITE_APP_API_URL || 'http://localhost:3000/api';
 
-export const loginUser = async ({ username, password }) => {
+export const loginUser = async ({ email, password }) => {
   try {
     const response = await axios.post(`${API_URL}/login`, {
-      username,
+      email,
       password,
     });
     return response.data; // Expecting { success: true, message: '...', data: {...} }

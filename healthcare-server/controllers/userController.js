@@ -47,33 +47,26 @@ exports.loginUser = async (req, res) => {
 };
 
 exports.registerUser = async (req, res) => {
-  const { firstName, lastName, email, password, age, gender } = req.body;
-
   try {
-    // 1. Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email' });
+    console.log('Incoming request body:', req.body); // ✅ Debug log
+
+    const { firstName, lastName, email, password, age, gender } = req.body;
+
+    if (!firstName || !lastName || !email || !password || !age || !gender) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    // 2. Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
 
-    // 3. Create new user
-    const newUser = new User({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-      age,
-      gender
-    });
-
+    const newUser = new User({ firstName, lastName, email, password, age, gender });
     await newUser.save();
 
-    res.status(201).json({ message: 'User registered successfully' });
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(201).json({ success: true, message: 'User registered successfully', data: newUser });
+  } catch (err) {
+    console.error('❌ Register Route Error:', err.message);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
