@@ -52,19 +52,46 @@ exports.registerUser = async (req, res) => {
 
     const { firstName, lastName, email, password, age, gender } = req.body;
 
+    // 1. Validate input
     if (!firstName || !lastName || !email || !password || !age || !gender) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
+    // 2. Check for existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    const newUser = new User({ firstName, lastName, email, password, age, gender });
+    // 3. Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 4. Create user
+    const newUser = new User({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      age,
+      gender
+    });
+
     await newUser.save();
 
-    res.status(201).json({ success: true, message: 'User registered successfully', data: newUser });
+    // 5. Respond with success
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        id: newUser._id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        age: newUser.age,
+        gender: newUser.gender
+      }
+    });
   } catch (err) {
     console.error('❌ Register Route Error:', err.message);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
