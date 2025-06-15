@@ -81,7 +81,7 @@ exports.registerUser = async (req, res) => {
     if (!['Male', 'Female'].includes(gender)) {
       return res.status(400).json({ success: false, message: 'Invalid gender value' });
     }
-
+    
     // 6. Check for existing user
     const existingUser = await User.findOne({ email: trimmedEmail });
     if (existingUser) {

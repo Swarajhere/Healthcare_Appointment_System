@@ -12,6 +12,7 @@ function ProtectedRoute({ children }) {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   return isLoggedIn ? children : <Navigate to="/login" replace />;
 }
+import BookAppointment from "./pages/BookAppointment";
 
 function Logout() {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ function App() {
           />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/logout" element={<Logout />} />
         </Routes>
       </main>
