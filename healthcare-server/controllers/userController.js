@@ -46,18 +46,20 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// Register user
 exports.registerUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, age, gender } = req.body;
+    const { firstName, lastName, email, password, age, gender, role } = req.body;
 
     // Trim inputs to remove accidental spaces
     const trimmedFirstName = firstName?.trim();
     const trimmedLastName = lastName?.trim();
     const trimmedEmail = email?.trim().toLowerCase();
+    const trimmedRole = role?.trim();
 
     // 1. Basic field validation
     if (!trimmedFirstName || !trimmedLastName || !trimmedEmail || !password || !age || !gender) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+      return res.status(400).json({ success: false, message: 'All required fields must be provided' });
     }
 
     // 2. Email format validation
@@ -81,30 +83,35 @@ exports.registerUser = async (req, res) => {
     if (!['Male', 'Female'].includes(gender)) {
       return res.status(400).json({ success: false, message: 'Invalid gender value' });
     }
-    
-    // 6. Check for existing user
+
+    // 6. Role validation (optional, defaults to 'user')
+    const validRoles = ['user', 'doctor', 'admin'];
+    const userRole = trimmedRole && validRoles.includes(trimmedRole) ? trimmedRole : 'user';
+
+    // 7. Check for existing user
     const existingUser = await User.findOne({ email: trimmedEmail });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    // 7. Hash password
+    // 8. Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 8. Create and save user
+    // 9. Create and save user
     const newUser = new User({
       firstName: trimmedFirstName,
       lastName: trimmedLastName,
       email: trimmedEmail,
       password: hashedPassword,
       age: parsedAge,
-      gender
+      gender,
+      role: userRole
     });
 
     await newUser.save();
 
-    // 9. Return success
+    // 10. Return success
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -114,12 +121,70 @@ exports.registerUser = async (req, res) => {
         lastName: newUser.lastName,
         email: newUser.email,
         age: newUser.age,
-        gender: newUser.gender
+        gender: newUser.gender,
+        role: newUser.role
       }
     });
 
   } catch (err) {
     console.error('❌ Register Route Error:', err.message);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+// Get user by ID
+exports.getUserById = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    // Find user by ID and exclude password
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get user by email
+exports.getUserByEmail = async (req, res) => {
+  try {
+    const email = req.params.email;
+    const user = await User.findOne({ email }).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user by email:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all users
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getUsersByRole = async (req, res) => {
+  try {
+    const role = req.params.role;
+    const validRoles = ['user', 'doctor', 'admin'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role provided' });
+    }
+    const users = await User.find({ role }).select('-password');
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error fetching users by role:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
