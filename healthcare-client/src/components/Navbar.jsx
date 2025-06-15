@@ -1,12 +1,19 @@
 import React from "react";
 import { Heart } from "lucide-react";
-import { useSelector } from "react-redux";
-
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../redux/slice/authSlice";
 
 const Navbar = () => {
-  // Mock login state (replace with actual auth logic, e.g., context or redux)
-  // const isLoggedIn = false;
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    dispatch(logout());
+    navigate("/login");
+  };
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
@@ -47,6 +54,7 @@ const Navbar = () => {
                 </a>
                 <a
                   href="/logout"
+                  onClick={handleLogout}
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
                 >
                   Logout
