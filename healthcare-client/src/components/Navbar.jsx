@@ -59,7 +59,10 @@ const Navbar = () => {
                 >
                   Logout
                 </a>
-                <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
+                <button 
+                  className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
+                  href="/book-appointment"
+                >
                   Book Appointment
                 </button>
               </>

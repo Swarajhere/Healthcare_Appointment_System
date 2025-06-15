@@ -7,6 +7,7 @@ import Register from "./components/Register";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "./redux/slice/authSlice";
+import BookAppointment from "./pages/BookAppointment";
 
 function Logout() {
   const dispatch = useDispatch();
@@ -26,6 +27,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/book-appointment" element={<BookAppointment />} />
         <Route path="/logout" element={<Logout />} />
       </Routes>
       {/* </main> */}
