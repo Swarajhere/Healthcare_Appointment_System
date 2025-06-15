@@ -19,17 +19,38 @@ const Calendar = () => {
     return days;
   };
 
-  // Fetch available slots for a selected date
+  // Generate 15-minute slots from 9:00 AM to 5:00 PM
+  const generateTimeSlots = () => {
+    const slots = [];
+    const startHour = 9; // 9:00 AM
+    const endHour = 17; // 5:00 PM
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        slots.push({ _id: `${time}-${Date.now()}`, time, isBooked: false });
+      }
+    }
+    return slots;
+  };
+
+  // Fetch available slots for a selected date and merge with generated slots
   useEffect(() => {
     const fetchSlots = async () => {
       try {
         const response = await axios.get(`/api/slots?date=${selectedDate.toISOString().split('T')[0]}`);
-        // Ensure response.data is an array; fallback to empty array if not
-        setSlots(Array.isArray(response.data) ? response.data : []);
+        const apiSlots = Array.isArray(response.data) ? response.data : [];
+        // Generate default slots
+        const defaultSlots = generateTimeSlots();
+        // Merge with API slots to update isBooked status
+        const mergedSlots = defaultSlots.map((defaultSlot) => {
+          const apiSlot = apiSlots.find((slot) => slot.time === defaultSlot.time);
+          return apiSlot ? { ...defaultSlot, isBooked: apiSlot.isBooked, _id: apiSlot._id } : defaultSlot;
+        });
+        setSlots(mergedSlots);
       } catch (error) {
         console.error('Error fetching slots:', error);
         setBookingStatus('Error fetching slots');
-        setSlots([]); // Reset to empty array on error
+        setSlots(generateTimeSlots()); // Fallback to default slots on error
       }
     };
     fetchSlots();
@@ -52,6 +73,11 @@ const Calendar = () => {
       setBookingStatus('Booking successful!');
       setUserDetails({ name: '', email: '' });
       setSelectedSlot(null);
+      // Refresh slots after booking
+      const refreshedSlots = slots.map((slot) =>
+        slot._id === selectedSlot._id ? { ...slot, isBooked: true } : slot
+      );
+      setSlots(refreshedSlots);
     } catch (error) {
       setBookingStatus(error.response?.data?.message || 'Booking failed');
     }
@@ -75,14 +101,14 @@ const Calendar = () => {
       </div>
 
       {/* Time Slots */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-4 gap-2 mb-4">
         {Array.isArray(slots) && slots.length > 0 ? (
           slots.map((slot) => (
             <button
               key={slot._id}
               onClick={() => setSelectedSlot(slot)}
               disabled={slot.isBooked}
-              className={`p-2 rounded ${slot.isBooked ? 'bg-gray-400 cursor-not-allowed' : selectedSlot?._id === slot._id ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              className={`p-2 rounded ${slot.isBooked ? 'bg-gray-400 cursor-not-allowed' : selectedSlot?._id === slot._id ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-blue-100'}`}
             >
               {slot.time}
             </button>

@@ -4,9 +4,12 @@ import Login from "./components/Login";
 import Home from "./components/Home";
 import Landing from "./components/Landing";
 import Register from "./components/Register";
+import Profile from "./pages/Profile";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "./redux/slice/authSlice";
+
+
 
 function ProtectedRoute({ children }) {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
@@ -23,6 +26,7 @@ function Logout() {
 }
 
 function App() {
+  const userId = 'USER_ID_HERE'; 
   return (
     <BrowserRouter>
       <Navbar />
@@ -38,8 +42,21 @@ function App() {
             }
           />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/book-appointment" element={<BookAppointment />} />
+          <Route path="/register" element={<Register/>} />
+          <Route 
+            path="/book-appointment" 
+            element={
+              <ProtectedRoute>
+                <BookAppointment />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile"
+            element={
+                <Profile userId={userId}/>
+            }
+          />
           <Route path="/logout" element={<Logout />} />
         </Routes>
       </main>
