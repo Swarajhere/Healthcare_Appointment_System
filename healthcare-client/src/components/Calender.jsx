@@ -24,10 +24,12 @@ const Calendar = () => {
     const fetchSlots = async () => {
       try {
         const response = await axios.get(`/api/slots?date=${selectedDate.toISOString().split('T')[0]}`);
-        setSlots(response.data);
+        // Ensure response.data is an array; fallback to empty array if not
+        setSlots(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Error fetching slots:', error);
         setBookingStatus('Error fetching slots');
+        setSlots([]); // Reset to empty array on error
       }
     };
     fetchSlots();
@@ -74,16 +76,20 @@ const Calendar = () => {
 
       {/* Time Slots */}
       <div className="grid grid-cols-3 gap-2 mb-4">
-        {slots.map((slot) => (
-          <button
-            key={slot._id}
-            onClick={() => setSelectedSlot(slot)}
-            disabled={slot.isBooked}
-            className={`p-2 rounded ${slot.isBooked ? 'bg-gray-400 cursor-not-allowed' : selectedSlot?._id === slot._id ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            {slot.time}
-          </button>
-        ))}
+        {Array.isArray(slots) && slots.length > 0 ? (
+          slots.map((slot) => (
+            <button
+              key={slot._id}
+              onClick={() => setSelectedSlot(slot)}
+              disabled={slot.isBooked}
+              className={`p-2 rounded ${slot.isBooked ? 'bg-gray-400 cursor-not-allowed' : selectedSlot?._id === slot._id ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            >
+              {slot.time}
+            </button>
+          ))
+        ) : (
+          <p className="text-gray-500">No slots available for this date.</p>
+        )}
       </div>
 
       {/* Booking Form */}

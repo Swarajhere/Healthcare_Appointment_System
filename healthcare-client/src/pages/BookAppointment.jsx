@@ -4,7 +4,6 @@ import Calendar from '../components/Calender'
 function BookAppointment() {
   return (
     <div>
-        BookAppointment
         <Calendar />
     </div>
   )
