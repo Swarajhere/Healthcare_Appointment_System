@@ -9,8 +9,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "./redux/slice/authSlice";
 
-
-
 function ProtectedRoute({ children }) {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   return isLoggedIn ? children : <Navigate to="/login" replace />;
@@ -26,40 +24,33 @@ function Logout() {
 }
 
 function App() {
-  const userId = 'USER_ID_HERE'; 
+  const userId = "USER_ID_HERE";
   return (
     <BrowserRouter>
       <Navbar />
-      <main className="container mx-auto p-4">
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register/>} />
-          <Route 
-            path="/book-appointment" 
-            element={
-              <ProtectedRoute>
-                <BookAppointment />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/profile"
-            element={
-                <Profile userId={userId}/>
-            }
-          />
-          <Route path="/logout" element={<Logout />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/book-appointment"
+          element={
+            <ProtectedRoute>
+              <BookAppointment />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/profile" element={<Profile userId={userId} />} />
+        <Route path="/logout" element={<Logout />} />
+      </Routes>
     </BrowserRouter>
   );
 }

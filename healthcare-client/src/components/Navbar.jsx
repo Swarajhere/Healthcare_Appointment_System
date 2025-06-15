@@ -1,5 +1,5 @@
-import React from "react";
-import { Heart } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Heart, Bell, Clock, LogOut } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../redux/slice/authSlice";
@@ -8,11 +8,20 @@ const Navbar = () => {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogout = (e) => {
     e.preventDefault();
     dispatch(logout());
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -25,50 +34,56 @@ const Navbar = () => {
               CareConnect
             </span>
           </div>
-          <div className="hidden md:flex items-center space-x-8">
-            <a
-              href="#services"
-              className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
-            >
-              Services
-            </a>
-            <a
-              href="#about"
-              className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
-            >
-              About
-            </a>
-            <a
-              href="#contact"
-              className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
-            >
-              Contact
-            </a>
+          <div className="flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+              <Clock className="h-4 w-4" />
+              <span>{currentTime.toLocaleTimeString()}</span>
+            </div>
             {isLoggedIn ? (
               <>
+                <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+                </button>
                 <a
                   href="/profile"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
                 >
                   Profile
                 </a>
-                <a
-                  href="/logout"
-                  onClick={handleLogout}
-                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
-                >
-                  Logout
-                </a>
-                <button 
+                <button
                   className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
-                  href="/book-appointment"
                   onClick={() => navigate("/book-appointment")}
                 >
                   Book Appointment
                 </button>
+                <button
+                  className="p-2 text-gray-600 hover:text-red-600 transition-colors duration-200"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
               </>
             ) : (
-              <>
+              <div className="hidden md:flex items-center space-x-8">
+                <a
+                  href="#services"
+                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                >
+                  Services
+                </a>
+                <a
+                  href="#about"
+                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                >
+                  About
+                </a>
+                <a
+                  href="#contact"
+                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                >
+                  Contact
+                </a>
                 <a
                   href="/login"
                   className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
@@ -81,7 +96,7 @@ const Navbar = () => {
                 >
                   Register
                 </a>
-              </>
+              </div>
             )}
           </div>
         </div>
