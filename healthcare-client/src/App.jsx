@@ -5,8 +5,13 @@ import Home from "./components/Home";
 import Landing from "./components/Landing";
 import Register from "./components/Register";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "./redux/slice/authSlice";
+
+function ProtectedRoute({ children }) {
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  return isLoggedIn ? children : <Navigate to="/login" replace />;
+}
 
 function Logout() {
   const dispatch = useDispatch();
@@ -20,15 +25,22 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      {/* <main className="container mx-auto p-4"> */}
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/logout" element={<Logout />} />
-      </Routes>
-      {/* </main> */}
+      <main className="container mx-auto p-4">
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/logout" element={<Logout />} />
+        </Routes>
+      </main>
     </BrowserRouter>
   );
 }
