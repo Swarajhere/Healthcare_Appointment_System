@@ -14,7 +14,7 @@ export const loginUser = async ({ email, password }, dispatch) => {
 
     if (response.data && response.data.user) {
       // Dispatch Redux action here
-      dispatch(loginSuccess(response.data.user));
+      dispatch(loginSuccess({user:response.data.user, token:response.data.token}));
 
       return {
         success: true,
