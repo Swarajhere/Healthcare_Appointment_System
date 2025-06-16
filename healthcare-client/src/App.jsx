@@ -59,14 +59,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile userId={userId} />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/profile" element={<Profile userId={userId} />} />
         <Route path="/logout" element={<Logout />} />
       </Routes>
     </div>
