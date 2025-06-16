@@ -27,8 +27,12 @@ const authSlice = createSlice({
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     },
+    updateProfile: (state, action) => {
+      state.user = action.payload; // Update user profile data
+      localStorage.setItem('user', JSON.stringify(action.payload)); // Sync with localStorage
+    },
   },
 });
 
-export const { loginSuccess, logout } = authSlice.actions;
+export const { loginSuccess, logout, updateProfile } = authSlice.actions;
 export default authSlice.reducer;
