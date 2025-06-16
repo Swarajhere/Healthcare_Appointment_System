@@ -9,6 +9,6 @@ router.get('/getuser/id/:userId', userController.getUserById);
 router.get('/getuser/email/:email', userController.getUserByEmail);
 router.get('/getusers', userController.getAllUsers);
 router.get('/getusers/role/:role', userController.getUsersByRole);
-
+router.put('/updateuser/:userId', userController.updateUser);
 
 module.exports = router;

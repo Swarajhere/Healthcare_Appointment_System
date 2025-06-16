@@ -30,10 +30,9 @@ function Logout() {
 }
 
 function App() {
-  const userId = "USER_ID_HERE";
+  const user = useSelector((state) => state.auth.user);
   const location = useLocation();
 
-  // Hide Navbar on login and register pages
   const showNavbar = !["/login", "/register"].includes(location.pathname);
 
   return (
@@ -59,19 +58,11 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/profile" element={<Profile userId={userId} />} />
+        <Route path="/profile" element={<Profile userId={user?.id} />} />
         <Route path="/logout" element={<Logout />} />
       </Routes>
     </div>
   );
 }
 
-function AppWrapper() {
-  return (
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  );
-}
-
-export default AppWrapper;
+export default App;
