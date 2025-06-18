@@ -1,29 +1,73 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { getUserProfile, updateUserProfile } from "../api/profile";
 import { User, Edit3, Check, X, Weight, Ruler } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 const Profile = () => {
-  const [user, setUser] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    age: 30,
-    gender: "Male",
-    weight: 75,
-    height: 180,
-  });
-
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const userId = useSelector((state) => state.auth.user?.id);
+  const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState(user);
+  const [editData, setEditData] = useState(null);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        console.log("Profile: Fetching profile, userId:", userId);
+        const response = await getUserProfile(dispatch);
+        console.log("Profile: getUserProfile response:", response);
+
+        if (response.success) {
+          setUser(response.user);
+          setEditData(response.user);
+        } else {
+          throw new Error(response.message);
+        }
+      } catch (err) {
+        console.error("Profile: Fetch error:", err.message);
+        setFetchError(err.message);
+        toast.error(err.message);
+        if (
+          err.message.includes("Session expired") ||
+          err.message.includes("unauthorized")
+        ) {
+          navigate("/login", { replace: true });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchProfile();
+    } else {
+      console.log("Profile: No userId, checking localStorage");
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetchProfile();
+      } else {
+        setFetchError("Please log in to view your profile.");
+        setLoading(false);
+        toast.error("Please log in.");
+        navigate("/login", { replace: true });
+      }
+    }
+  }, [userId, dispatch, navigate]);
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (editData.weight <= 0 || editData.weight > 500) {
+    if (editData?.weight && (editData.weight <= 0 || editData.weight > 500)) {
       newErrors.weight = "Weight must be between 1-500 kg";
     }
 
-    if (editData.height <= 0 || editData.height > 300) {
+    if (editData?.height && (editData.height <= 0 || editData.height > 300)) {
       newErrors.height = "Height must be between 1-300 cm";
     }
 
@@ -37,10 +81,37 @@ const Profile = () => {
     setIsEditing(true);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (validateForm()) {
-      setUser(editData);
-      setIsEditing(false);
+      try {
+        const response = await updateUserProfile(
+          userId,
+          {
+            weight: editData.weight || null,
+            height: editData.height || null,
+          },
+          dispatch
+        );
+        console.log("Profile: updateUserProfile response:", response);
+
+        if (response.success) {
+          setUser(response.user);
+          setIsEditing(false);
+          toast.success("Profile updated successfully");
+        } else {
+          toast.error(response.message);
+          if (
+            response.message.includes("Session expired") ||
+            response.message.includes("unauthorized")
+          ) {
+            navigate("/login", { replace: true });
+          }
+        }
+      } catch (err) {
+        console.error("Profile: Update error:", err.message);
+        toast.error("Failed to update profile");
+        navigate("/login", { replace: true });
+      }
     }
   };
 
@@ -52,21 +123,38 @@ const Profile = () => {
 
   const handleInputChange = (field, value) => {
     setEditData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
   const calculateBMI = () => {
+    if (!user?.weight || !user?.height) return "N/A";
     const heightInMeters = user.height / 100;
     return (user.weight / (heightInMeters * heightInMeters)).toFixed(1);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-gray-600">Loading profile...</div>
+      </div>
+    );
+  }
+
+  if (fetchError || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-red-500">
+          Error: {fetchError || "Unable to load profile"}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 transform transition-all duration-500 hover:shadow-3xl">
-        {/* Header Section */}
         <div className="relative p-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-2xl text-white">
           <div className="flex flex-col items-center">
             <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-2xl font-bold shadow-lg">
@@ -79,8 +167,6 @@ const Profile = () => {
               {user.email}
             </p>
           </div>
-
-          {/* Edit Button */}
           {!isEditing && (
             <button
               onClick={handleEditProfile}
@@ -90,11 +176,8 @@ const Profile = () => {
             </button>
           )}
         </div>
-
-        {/* Content Section */}
         <div className="p-8">
           <div className="space-y-6">
-            {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
                 <span className="text-gray-500 text-sm font-medium">Age</span>
@@ -109,16 +192,12 @@ const Profile = () => {
                 </p>
               </div>
             </div>
-
-            {/* Health Metrics */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <Weight size={20} className="text-blue-500" />
                 Health Metrics
               </h3>
-
               <div className="grid grid-cols-2 gap-4">
-                {/* Weight */}
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                   <div className="flex items-center gap-2 mb-2">
                     <Weight size={16} className="text-blue-600" />
@@ -130,11 +209,11 @@ const Profile = () => {
                     <div>
                       <input
                         type="number"
-                        value={editData.weight}
+                        value={editData.weight || ""}
                         onChange={(e) =>
                           handleInputChange(
                             "weight",
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value) || null
                           )
                         }
                         className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
@@ -152,12 +231,10 @@ const Profile = () => {
                     </div>
                   ) : (
                     <p className="text-2xl font-bold text-gray-800">
-                      {user.weight} kg
+                      {user.weight ? `${user.weight} kg` : "Not set"}
                     </p>
                   )}
                 </div>
-
-                {/* Height */}
                 <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
                   <div className="flex items-center gap-2 mb-2">
                     <Ruler size={16} className="text-green-600" />
@@ -169,11 +246,11 @@ const Profile = () => {
                     <div>
                       <input
                         type="number"
-                        value={editData.height}
+                        value={editData.height || ""}
                         onChange={(e) =>
                           handleInputChange(
                             "height",
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value) || null
                           )
                         }
                         className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
@@ -191,13 +268,11 @@ const Profile = () => {
                     </div>
                   ) : (
                     <p className="text-2xl font-bold text-gray-800">
-                      {user.height} cm
+                      {user.height ? `${user.height} cm` : "Not set"}
                     </p>
                   )}
                 </div>
               </div>
-
-              {/* BMI Display */}
               {!isEditing && (
                 <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
                   <div className="flex items-center justify-between">
@@ -212,18 +287,20 @@ const Profile = () => {
                     <div
                       className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
                       style={{
-                        width: `${Math.min(
-                          (parseFloat(calculateBMI()) / 35) * 100,
-                          100
-                        )}%`,
+                        width: `${
+                          calculateBMI() === "N/A"
+                            ? 0
+                            : Math.min(
+                                (parseFloat(calculateBMI()) / 35) * 100,
+                                100
+                              )
+                        }%`,
                       }}
                     ></div>
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
               {isEditing ? (
                 <>

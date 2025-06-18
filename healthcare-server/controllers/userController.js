@@ -2,7 +2,26 @@ const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-exports.getAllUsers = async (req, res) => {
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  console.log('verifyToken: Authorization header:', authHeader);
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('verifyToken: Decoded token:', decoded);
+    req.userId = decoded.id; // Match JWT payload 'id'
+    next();
+  } catch (error) {
+    console.error('verifyToken: Token verification error:', error.message);
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+};
+
+const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
@@ -11,7 +30,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -26,31 +45,34 @@ exports.loginUser = async (req, res) => {
     }
 
     const accessToken = jwt.sign(
-      { id: user._id, email: user.email, name: user.firstName + " " + user.lastName },
+      { id: user._id.toString(), email: user.email, name: user.firstName + " " + user.lastName },
       process.env.JWT_SECRET,
       { expiresIn: "2h" }
     );
 
+    console.log('loginUser: Generated token for id:', user._id.toString());
+
     res.status(200).json({
       message: 'Login successful',
       user: {
-        id: user._id,
+        id: user._id.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
         age: user.age,
         gender: user.gender,
         weight: user.weight,
-        height: user.height
+        height: user.height,
       },
       token: accessToken,
     });
   } catch (error) {
+    console.error('loginUser: Error:', error.message);
     res.status(500).json({ error: error.message });
   }
 };
 
-exports.registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
     const { firstName, lastName, email, password, age, gender, role } = req.body;
 
@@ -99,7 +121,7 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       age: parsedAge,
       gender,
-      role: userRole
+      role: userRole,
     });
 
     await newUser.save();
@@ -108,32 +130,38 @@ exports.registerUser = async (req, res) => {
       success: true,
       message: 'User registered successfully',
       data: {
-        id: newUser._id,
+        id: newUser._id.toString(),
         firstName: newUser.firstName,
-        lastName: newUser.lastName,
+        lastName: newUser.firstName,
         email: newUser.email,
         age: newUser.age,
         gender: newUser.gender,
-        role: newUser.role
-      }
+        role: newUser.role,
+      },
     });
   } catch (err) {
-    console.error('❌ Register Route Error:', err.message);
+    console.error('registerUser: Error:', err.message);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
 
-exports.getUserById = async (req, res) => {
+const getUserById = async (req, res) => {
   try {
     const userId = req.params.userId;
+    console.log('getUserById: Requested userId:', userId, 'req.userId:', req.userId);
+    if (userId !== req.userId) {
+      return res.status(403).json({ message: 'Unauthorized access' });
+    }
+
     const user = await User.findById(userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
     res.status(200).json({
       message: 'User fetched successfully',
       user: {
-        id: user._id,
+        id: user._id.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -141,25 +169,30 @@ exports.getUserById = async (req, res) => {
         gender: user.gender,
         weight: user.weight,
         height: user.height,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (error) {
-    console.error('Error fetching user:', error);
+    console.error('getUserById: Error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.updateUser = async (req, res) => {
+const updateUser = async (req, res) => {
   try {
     const userId = req.params.userId;
+    console.log('updateUser: Requested userId:', userId, 'req.userId:', req.userId);
+    if (userId !== req.userId) {
+      return res.status(403).json({ message: 'Unauthorized access' });
+    }
+
     const { weight, height } = req.body;
 
-    if (weight !== undefined && (weight <= 0 || weight > 500)) {
+    if (weight !== undefined && weight !== null && (weight <= 0 || weight > 500)) {
       return res.status(400).json({ message: 'Weight must be between 1-500 kg' });
     }
 
-    if (height !== undefined && (height <= 0 || height > 300)) {
+    if (height !== undefined && height !== null && (height <= 0 || height > 300)) {
       return res.status(400).json({ message: 'Height must be between 1-300 cm' });
     }
 
@@ -176,7 +209,7 @@ exports.updateUser = async (req, res) => {
     res.status(200).json({
       message: 'Profile updated successfully',
       user: {
-        id: user._id,
+        id: user._id.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -184,16 +217,16 @@ exports.updateUser = async (req, res) => {
         gender: user.gender,
         weight: user.weight,
         height: user.height,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error('updateUser: Error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.getUserByEmail = async (req, res) => {
+const getUserByEmail = async (req, res) => {
   try {
     const email = req.params.email;
     const user = await User.findOne({ email }).select('-password');
@@ -202,25 +235,15 @@ exports.getUserByEmail = async (req, res) => {
     }
     res.status(200).json({
       message: 'User fetched successfully',
-      user
+      user,
     });
   } catch (error) {
-    console.error('Error fetching user by email:', error);
+    console.error('getUserByEmail: Error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find().select('-password');
-    res.status(200).json(users);
-  } catch (error) {
-    console.error('Error fetching all users:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getUsersByRole = async (req, res) => {
+const getUsersByRole = async (req, res) => {
   try {
     const role = req.params.role;
     const validRoles = ['user', 'doctor', 'admin'];
@@ -230,7 +253,18 @@ exports.getUsersByRole = async (req, res) => {
     const users = await User.find({ role }).select('-password');
     res.status(200).json(users);
   } catch (error) {
-    console.error('Error fetching users by role:', error);
+    console.error('getUsersByRole: Error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+module.exports = {
+  verifyToken,
+  getAllUsers,
+  loginUser,
+  registerUser,
+  getUserById,
+  updateUser,
+  getUserByEmail,
+  getUsersByRole,
 };
