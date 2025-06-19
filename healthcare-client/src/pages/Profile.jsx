@@ -63,6 +63,26 @@ const Profile = () => {
   const validateForm = () => {
     const newErrors = {};
 
+    if (!editData?.firstName?.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (editData.firstName.length > 50) {
+      newErrors.firstName = "First name must be 50 characters or less";
+    }
+
+    if (!editData?.lastName?.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (editData.lastName.length > 50) {
+      newErrors.lastName = "Last name must be 50 characters or less";
+    }
+
+    if (!editData?.age || editData.age <= 0 || editData.age > 120) {
+      newErrors.age = "Age must be between 1 and 120";
+    }
+
+    if (!editData?.gender || !["Male", "Female"].includes(editData.gender)) {
+      newErrors.gender = "Gender must be Male or Female";
+    }
+
     if (editData?.weight && (editData.weight <= 0 || editData.weight > 500)) {
       newErrors.weight = "Weight must be between 1-500 kg";
     }
@@ -87,6 +107,10 @@ const Profile = () => {
         const response = await updateUserProfile(
           userId,
           {
+            firstName: editData.firstName.trim(),
+            lastName: editData.lastName.trim(),
+            age: parseInt(editData.age),
+            gender: editData.gender,
             weight: editData.weight || null,
             height: editData.height || null,
           },
@@ -178,18 +202,140 @@ const Profile = () => {
         </div>
         <div className="p-8">
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                <span className="text-gray-500 text-sm font-medium">Age</span>
-                <p className="text-2xl font-bold text-gray-800">{user.age}</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+                  <span className="text-gray-500 text-sm font-medium">
+                    First Name
+                  </span>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={editData.firstName}
+                        onChange={(e) =>
+                          handleInputChange("firstName", e.target.value)
+                        }
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
+                          errors.firstName
+                            ? "border-red-300 bg-red-50 text-red-700"
+                            : "border-gray-300 bg-white text-gray-800"
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        placeholder="First Name"
+                      />
+                      {errors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.firstName}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-800">
+                      {user.firstName}
+                    </p>
+                  )}
+                </div>
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+                  <span className="text-gray-500 text-sm font-medium">
+                    Last Name
+                  </span>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={editData.lastName}
+                        onChange={(e) =>
+                          handleInputChange("lastName", e.target.value)
+                        }
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
+                          errors.lastName
+                            ? "border-red-300 bg-red-50 text-red-700"
+                            : "border-gray-300 bg-white text-gray-800"
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        placeholder="Last Name"
+                      />
+                      {errors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.lastName}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-800">
+                      {user.lastName}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                <span className="text-gray-500 text-sm font-medium">
-                  Gender
-                </span>
-                <p className="text-2xl font-bold text-gray-800">
-                  {user.gender}
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+                  <span className="text-gray-500 text-sm font-medium">Age</span>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        type="number"
+                        value={editData.age}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "age",
+                            parseInt(e.target.value) || ""
+                          )
+                        }
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
+                          errors.age
+                            ? "border-red-300 bg-red-50 text-red-700"
+                            : "border-gray-300 bg-white text-gray-800"
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        placeholder="Age"
+                      />
+                      {errors.age && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.age}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-800">
+                      {user.age}
+                    </p>
+                  )}
+                </div>
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+                  <span className="text-gray-500 text-sm font-medium">
+                    Gender
+                  </span>
+                  {isEditing ? (
+                    <div>
+                      <select
+                        value={editData.gender}
+                        onChange={(e) =>
+                          handleInputChange("gender", e.target.value)
+                        }
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
+                          errors.gender
+                            ? "border-red-300 bg-red-50 text-red-700"
+                            : "border-gray-300 bg-white text-gray-800"
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                      {errors.gender && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.gender}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-800">
+                      {user.gender}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             <div className="space-y-4">

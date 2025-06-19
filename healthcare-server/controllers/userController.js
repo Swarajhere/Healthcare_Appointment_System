@@ -132,7 +132,7 @@ const registerUser = async (req, res) => {
       data: {
         id: newUser._id.toString(),
         firstName: newUser.firstName,
-        lastName: newUser.firstName,
+        lastName: newUser.lastName,
         email: newUser.email,
         age: newUser.age,
         gender: newUser.gender,
@@ -186,7 +186,24 @@ const updateUser = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized access' });
     }
 
-    const { weight, height } = req.body;
+    const { firstName, lastName, age, gender, weight, height } = req.body;
+
+    // Validation
+    if (firstName !== undefined && (!firstName.trim() || firstName.length > 50)) {
+      return res.status(400).json({ message: 'First name must be 1-50 characters' });
+    }
+
+    if (lastName !== undefined && (!lastName.trim() || lastName.length > 50)) {
+      return res.status(400).json({ message: 'Last name must be 1-50 characters' });
+    }
+
+    if (age !== undefined && (isNaN(age) || age <= 0 || age > 120)) {
+      return res.status(400).json({ message: 'Age must be between 1 and 120' });
+    }
+
+    if (gender !== undefined && !['Male', 'Female'].includes(gender)) {
+      return res.status(400).json({ message: 'Gender must be Male or Female' });
+    }
 
     if (weight !== undefined && weight !== null && (weight <= 0 || weight > 500)) {
       return res.status(400).json({ message: 'Weight must be between 1-500 kg' });
@@ -196,9 +213,18 @@ const updateUser = async (req, res) => {
       return res.status(400).json({ message: 'Height must be between 1-300 cm' });
     }
 
+    const updateData = {
+      ...(firstName && { firstName: firstName.trim() }),
+      ...(lastName && { lastName: lastName.trim() }),
+      ...(age && { age: parseInt(age) }),
+      ...(gender && { gender }),
+      ...(weight !== undefined && { weight }),
+      ...(height !== undefined && { height }),
+    };
+
     const user = await User.findByIdAndUpdate(
       userId,
-      { weight, height },
+      updateData,
       { new: true, select: '-password' }
     );
 
