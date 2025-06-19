@@ -61,12 +61,12 @@ const adminSlice = createSlice({
       })
       .addCase(approveDoctor.fulfilled, (state, action) => {
         state.pendingDoctors = state.pendingDoctors.filter(
-          (doctor) => doctor.id !== action.payload
+          (doctor) => doctor._id !== action.payload
         );
       })
       .addCase(rejectDoctor.fulfilled, (state, action) => {
         state.pendingDoctors = state.pendingDoctors.filter(
-          (doctor) => doctor.id !== action.payload
+          (doctor) => doctor._id !== action.payload
         );
       });
   },

@@ -344,7 +344,7 @@ function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {doctors.map((doctor) => (
               <div
-                key={doctor.id}
+                key={doctor._id}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 group overflow-hidden"
               >
                 <div className="relative">
