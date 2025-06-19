@@ -1,30 +1,28 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers["authorization"]; // header mdun frontend side kadun current jwt token yete!
-  const token = authHeader && authHeader.split(" ")[1];
-  //   console.log(token);
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "No token provided! Access Denied. Please log in to continue",
-    });
-  } // if token is invalid so it'll never be able to access home page so home page is protected
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
 
-  // decode the token - user info
+  const token = authHeader.split(' ')[1];
   try {
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    console.log(decodedToken);
-    req.userInfo = decodedToken;
-    console.log(req.userInfo);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;
+    req.userRole = decoded.role; // Attach role for RBAC
     next();
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Error verifying token"
-    });
+    console.error('verifyToken: Error:', error.message);
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
-module.exports = authMiddleware;
+const restrictTo = (role) => (req, res, next) => {
+  if (req.userRole !== role) {
+    return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
+  }
+  next();
+};
+
+module.exports = { verifyToken, restrictTo };

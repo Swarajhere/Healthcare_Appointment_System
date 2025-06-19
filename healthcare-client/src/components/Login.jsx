@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import { loginUser } from "../api/login";
 import { NavLink, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import {
-  Heart,
   Mail,
   Lock,
   Eye,
@@ -22,7 +21,6 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -33,13 +31,30 @@ const Login = () => {
     try {
       const response = await loginUser({ email, password }, dispatch);
       if (response.success) {
-        toast.success(response.message || "Login successful");
-        console.log("Login successful:", response.message);
-
-        // Redirect after 2 seconds
-        setTimeout(() => {
-          navigate("/home");
-        }, 2000);
+        const user = response.user;
+        console.log(user);
+        if (user.role === "doctor" && user.status === "approved") {
+          toast.success("Doctor login successful");
+          setTimeout(() => {
+            navigate("/doctor-dashboard");
+          }, 2000);
+        } else if (user.role === "doctor" && user.status === "pending") {
+          setError("Your registration is pending admin approval.");
+          toast.error("Your registration is pending admin approval.");
+        } else if (user.role === "doctor" && user.status === "rejected") {
+          setError("Your registration was rejected by the admin.");
+          toast.error("Your registration was rejected by the admin.");
+        } else if (user.role === "admin") {
+          toast.success("Admin login successful");
+          setTimeout(() => {
+            navigate("/admin-dashboard");
+          }, 2000);
+        } else {
+          toast.success(response.message || "Login successful");
+          setTimeout(() => {
+            navigate("/home");
+          }, 2000);
+        }
       } else {
         setError(response.message || "Login failed");
         toast.error(response.message || "Login failed");
@@ -55,13 +70,7 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-blue-600 p-3 rounded-full">
-              <Heart className="h-8 w-8 text-white" />
-            </div>
-          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome Back
           </h1>
@@ -69,8 +78,6 @@ const Login = () => {
             Sign in to access your healthcare dashboard
           </p>
         </div>
-
-        {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="flex items-center mb-6">
             <Shield className="h-5 w-5 text-blue-600 mr-2" />
@@ -78,16 +85,13 @@ const Login = () => {
               Secure Login
             </span>
           </div>
-
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
               <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
               <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
             <div>
               <label
                 htmlFor="email"
@@ -110,8 +114,6 @@ const Login = () => {
                 />
               </div>
             </div>
-
-            {/* Password Field */}
             <div>
               <label
                 htmlFor="password"
@@ -145,18 +147,6 @@ const Login = () => {
                 </button>
               </div>
             </div>
-
-            {/* Forgot Password Link */}
-            <div className="flex justify-end">
-              <a
-                href="#"
-                className="text-sm text-blue-600 hover:text-blue-700 transition-colors duration-200"
-              >
-                Forgot your password?
-              </a>
-            </div>
-
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -175,8 +165,6 @@ const Login = () => {
               )}
             </button>
           </form>
-
-          {/* Register Link */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-center text-sm text-gray-600">
               Don't have an account?{" "}
@@ -184,17 +172,10 @@ const Login = () => {
                 to="/register"
                 className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
               >
-                Create one now
+                Register as a user
               </NavLink>
             </p>
           </div>
-        </div>
-
-        {/* Security Notice */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            Your data is protected with industry-standard encryption
-          </p>
         </div>
       </div>
     </div>

@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  console.log('verifyToken: Authorization header:', authHeader);
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'No token provided' });
   }
@@ -12,11 +11,11 @@ const verifyToken = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('verifyToken: Decoded token:', decoded);
-    req.userId = decoded.id; // Match JWT payload 'id'
+    req.userId = decoded.id;
+    req.userRole = decoded.role; // Add role to request object
     next();
   } catch (error) {
-    console.error('verifyToken: Token verification error:', error.message);
+    console.error('verifyToken: Error:', error.message);
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
@@ -44,13 +43,24 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    const accessToken = jwt.sign(
-      { id: user._id.toString(), email: user.email, name: user.firstName + " " + user.lastName },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
+    // Doctor-specific checks
+    if (user.role === 'doctor') {
+      if (user.status === 'pending') {
+        return res.status(403).json({ message: 'Your registration is pending admin approval.' });
+      }
+      if (user.status === 'rejected') {
+        return res.status(403).json({ message: 'Your registration was rejected.' });
+      }
+      if (!user.isActive) {
+        return res.status(403).json({ message: 'Your account is inactive. Contact support.' });
+      }
+    }
 
-    console.log('loginUser: Generated token for id:', user._id.toString());
+    const accessToken = jwt.sign(
+      { id: user._id.toString(), email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '2h' }
+    );
 
     res.status(200).json({
       message: 'Login successful',
@@ -63,6 +73,10 @@ const loginUser = async (req, res) => {
         gender: user.gender,
         weight: user.weight,
         height: user.height,
+        role: user.role,
+        specialty: user.specialty,
+        licenseNumber: user.licenseNumber,
+        status: user.status, // Include status for doctors
       },
       token: accessToken,
     });
@@ -145,10 +159,65 @@ const registerUser = async (req, res) => {
   }
 };
 
+// New function for doctor registration
+const registerDoctor = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, specialty, licenseNumber } = req.body;
+
+    if (!firstName || !lastName || !email || !password || !specialty || !licenseNumber) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newDoctor = new User({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim().toLowerCase(),
+      password: hashedPassword,
+      role: 'doctor',
+      specialty: specialty.trim(),
+      licenseNumber: licenseNumber.trim(),
+      status: 'pending',
+      isActive: false,
+      age: 0, // Default value since not required for doctors
+      gender: 'Male', // Default value since not required for doctors
+    });
+
+    await newDoctor.save();
+
+    res.status(201).json({
+      message: 'Doctor registration submitted. Awaiting admin approval.',
+      data: {
+        id: newDoctor._id.toString(),
+        email: newDoctor.email,
+        role: newDoctor.role,
+      },
+    });
+  } catch (error) {
+    console.error('registerDoctor: Error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const getUserById = async (req, res) => {
   try {
     const userId = req.params.userId;
-    console.log('getUserById: Requested userId:', userId, 'req.userId:', req.userId);
     if (userId !== req.userId) {
       return res.status(403).json({ message: 'Unauthorized access' });
     }
@@ -170,6 +239,8 @@ const getUserById = async (req, res) => {
         weight: user.weight,
         height: user.height,
         role: user.role,
+        specialty: user.specialty,
+        licenseNumber: user.licenseNumber,
       },
     });
   } catch (error) {
@@ -181,14 +252,12 @@ const getUserById = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const userId = req.params.userId;
-    console.log('updateUser: Requested userId:', userId, 'req.userId:', req.userId);
     if (userId !== req.userId) {
       return res.status(403).json({ message: 'Unauthorized access' });
     }
 
     const { firstName, lastName, age, gender, weight, height } = req.body;
 
-    // Validation
     if (firstName !== undefined && (!firstName.trim() || firstName.length > 50)) {
       return res.status(400).json({ message: 'First name must be 1-50 characters' });
     }
@@ -222,11 +291,7 @@ const updateUser = async (req, res) => {
       ...(height !== undefined && { height }),
     };
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true, select: '-password' }
-    );
+    const user = await User.findByIdAndUpdate(userId, updateData, { new: true, select: '-password' });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -289,6 +354,7 @@ module.exports = {
   getAllUsers,
   loginUser,
   registerUser,
+  registerDoctor, // New export
   getUserById,
   updateUser,
   getUserByEmail,

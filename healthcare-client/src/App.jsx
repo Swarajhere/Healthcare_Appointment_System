@@ -6,6 +6,9 @@ import Landing from "./components/Landing";
 import Register from "./components/Register";
 import Profile from "./pages/Profile";
 import BookAppointment from "./pages/BookAppointment";
+import DoctorRegister from "./pages/DoctorRegister";
+import AdminDashboard from "./pages/AdminDashboard";
+import DoctorDashboard from "./pages/DoctorDashboard";
 import {
   BrowserRouter,
   Routes,
@@ -16,9 +19,17 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "./redux/slice/authSlice";
 
-function ProtectedRoute({ children }) {
-  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+function ProtectedRoute({ children, requiredRole }) {
+  const { isLoggedIn, user } = useSelector((state) => state.auth);
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to="/home" replace />;
+  }
+  return children;
 }
 
 function Logout() {
@@ -32,8 +43,9 @@ function Logout() {
 function App() {
   const user = useSelector((state) => state.auth.user);
   const location = useLocation();
-
-  const showNavbar = !["/login", "/register"].includes(location.pathname);
+  const showNavbar = !["/login", "/register", "/doctor-register"].includes(
+    location.pathname
+  );
 
   return (
     <div>
@@ -50,6 +62,23 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/doctor-register" element={<DoctorRegister />} />
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/doctor-dashboard"
+          element={
+            <ProtectedRoute requiredRole="doctor">
+              <DoctorDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/book-appointment"
           element={
