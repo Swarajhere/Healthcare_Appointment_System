@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import { getUserProfile, updateUserProfile } from "../api/profile";
 import { User, Edit3, Check, X, Weight, Ruler } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -219,11 +219,10 @@ const Profile = () => {
                         onChange={(e) =>
                           handleInputChange("firstName", e.target.value)
                         }
-                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
-                          errors.firstName
-                            ? "border-red-300 bg-red-50 text-red-700"
-                            : "border-gray-300 bg-white text-gray-800"
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${errors.firstName
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-gray-300 bg-white text-gray-800"
+                          } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                         placeholder="First Name"
                       />
                       {errors.firstName && (
@@ -250,11 +249,10 @@ const Profile = () => {
                         onChange={(e) =>
                           handleInputChange("lastName", e.target.value)
                         }
-                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
-                          errors.lastName
-                            ? "border-red-300 bg-red-50 text-red-700"
-                            : "border-gray-300 bg-white text-gray-800"
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${errors.lastName
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-gray-300 bg-white text-gray-800"
+                          } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                         placeholder="Last Name"
                       />
                       {errors.lastName && (
@@ -284,11 +282,10 @@ const Profile = () => {
                             parseInt(e.target.value) || ""
                           )
                         }
-                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
-                          errors.age
-                            ? "border-red-300 bg-red-50 text-red-700"
-                            : "border-gray-300 bg-white text-gray-800"
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${errors.age
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-gray-300 bg-white text-gray-800"
+                          } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                         placeholder="Age"
                       />
                       {errors.age && (
@@ -314,11 +311,10 @@ const Profile = () => {
                         onChange={(e) =>
                           handleInputChange("gender", e.target.value)
                         }
-                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
-                          errors.gender
-                            ? "border-red-300 bg-red-50 text-red-700"
-                            : "border-gray-300 bg-white text-gray-800"
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${errors.gender
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-gray-300 bg-white text-gray-800"
+                          } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                       >
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
@@ -362,11 +358,10 @@ const Profile = () => {
                             parseFloat(e.target.value) || null
                           )
                         }
-                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
-                          errors.weight
-                            ? "border-red-300 bg-red-50 text-red-700"
-                            : "border-gray-300 bg-white text-gray-800"
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${errors.weight
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-gray-300 bg-white text-gray-800"
+                          } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                         placeholder="kg"
                       />
                       {errors.weight && (
@@ -399,11 +394,10 @@ const Profile = () => {
                             parseFloat(e.target.value) || null
                           )
                         }
-                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${
-                          errors.height
-                            ? "border-red-300 bg-red-50 text-red-700"
-                            : "border-gray-300 bg-white text-gray-800"
-                        } focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                        className={`w-full px-3 py-2 rounded-lg border text-lg font-bold ${errors.height
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-gray-300 bg-white text-gray-800"
+                          } focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                         placeholder="cm"
                       />
                       {errors.height && (
@@ -433,14 +427,13 @@ const Profile = () => {
                     <div
                       className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
                       style={{
-                        width: `${
-                          calculateBMI() === "N/A"
-                            ? 0
-                            : Math.min(
-                                (parseFloat(calculateBMI()) / 35) * 100,
-                                100
-                              )
-                        }%`,
+                        width: `${calculateBMI() === "N/A"
+                          ? 0
+                          : Math.min(
+                            (parseFloat(calculateBMI()) / 35) * 100,
+                            100
+                          )
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -474,6 +467,16 @@ const Profile = () => {
                   Edit Profile
                 </button>
               )}
+            </div>
+            <div className="pt-6 border-t border-gray-200">
+              <p className="text-center text-sm text-gray-600">
+                <NavLink
+                  to="/reset-password"
+                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                >
+                  Reset Password
+                </NavLink>
+              </p>
             </div>
           </div>
         </div>

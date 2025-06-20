@@ -9,6 +9,11 @@ import BookAppointment from "./pages/BookAppointment";
 import DoctorRegister from "./pages/DoctorRegister";
 import AdminDashboard from "./pages/AdminDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOtpAndReset from "./pages/VerifyOtpAndReset";
+import ErrorBoundary from "./components/ErrorBoundary";
+
 import {
   BrowserRouter,
   Routes,
@@ -50,46 +55,55 @@ function App() {
   return (
     <div>
       {showNavbar && <Navbar />}
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route
-          path="/home"
-          element={
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={
             <ProtectedRoute>
-              <Home />
+              <ResetPassword />
             </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/doctor-register" element={<DoctorRegister />} />
-        <Route
-          path="/admin-dashboard"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/doctor-dashboard"
-          element={
-            <ProtectedRoute requiredRole="doctor">
-              <DoctorDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/book-appointment"
-          element={
-            <ProtectedRoute>
-              <BookAppointment />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/profile" element={<Profile userId={user?.id} />} />
-        <Route path="/logout" element={<Logout />} />
-      </Routes>
+          } />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp-reset" element={<VerifyOtpAndReset />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/doctor-register" element={<DoctorRegister />} />
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor-dashboard"
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <DoctorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/book-appointment"
+            element={
+              <ProtectedRoute>
+                <BookAppointment />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/profile" element={<Profile userId={user?.id} />} />
+          <Route path="/logout" element={<Logout />} />
+        </Routes>
+      </ErrorBoundary>
     </div>
   );
 }

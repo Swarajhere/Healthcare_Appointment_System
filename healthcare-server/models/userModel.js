@@ -14,6 +14,8 @@ const userSchema = new mongoose.Schema({
   licenseNumber: { type: String }, // Doctor-specific field
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' }, // For doctor approval workflow
   isActive: { type: Boolean, default: true }, // Inactive until approved for doctors
+  resetPasswordOtp: { type: String }, // OTP for password reset
+  resetPasswordOtpExpires: { type: Date }, // OTP expiry time
 });
 
 module.exports = mongoose.model('User', userSchema);
