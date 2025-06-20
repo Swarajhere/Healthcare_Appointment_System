@@ -387,10 +387,10 @@ const resetPassword = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.status(200).json({ message: 'Password changed successfully' });
+    res.status(200).json({ message: 'Password changed successfully', success: true });
   } catch (error) {
     console.error('resetPassword: Error:', error.message);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', success: false });
   }
 };
 
@@ -436,10 +436,10 @@ const forgotPassword = async (req, res) => {
 
     await transporter.sendMail(mailOptions);
 
-    res.status(200).json({ message: 'OTP sent to your email' });
+    res.status(200).json({ message: 'OTP sent to your email', success: true });
   } catch (error) {
     console.error('forgotPassword: Error:', error.message);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', success: false });
   }
 };
 
@@ -480,10 +480,10 @@ const verifyOtpAndReset = async (req, res) => {
     user.resetPasswordOtpExpires = undefined;
     await user.save();
 
-    res.status(200).json({ message: 'Password reset successful' });
+    res.status(200).json({ message: 'Password reset successful', success: true });
   } catch (error) {
     console.error('verifyOtpAndReset: Error:', error.message);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', success: false });
   }
 };
 
