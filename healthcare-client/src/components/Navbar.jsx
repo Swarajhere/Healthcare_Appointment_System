@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Heart, Bell, Clock, LogOut } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Heart, Bell, Clock, LogOut, User } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../redux/slice/authSlice";
 
 const Navbar = () => {
-  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const { isLoggedIn, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -47,19 +47,23 @@ const Navbar = () => {
                 </button>
                 <a
                   href="/profile"
-                  className="text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                  className="p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                  title="Profile"
                 >
-                  Profile
+                  <User className="h-5 w-5" />
                 </a>
-                <button
-                  className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
-                  onClick={() => navigate("/book-appointment")}
-                >
-                  Book Appointment
-                </button>
+                {user?.role === "user" && (
+                  <button
+                    className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
+                    onClick={() => navigate("/book-appointment")}
+                  >
+                    Book Appointment
+                  </button>
+                )}
                 <button
                   className="p-2 text-gray-600 hover:text-red-600 transition-colors duration-200"
                   onClick={handleLogout}
+                  title="Logout"
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
