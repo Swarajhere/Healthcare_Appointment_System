@@ -206,7 +206,7 @@ const AdminDashboard = () => {
             <div className="divide-y divide-gray-200">
               {filteredDoctors.map((doctor) => (
                 <div
-                  key={doctor.id}
+                  key={doctor._id}
                   className="p-6 hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div className="flex items-center justify-between">
@@ -237,14 +237,14 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => handleApprove(doctor.id)}
+                        onClick={() => handleApprove(doctor._id)}
                         className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium"
                       >
                         <UserCheck className="h-4 w-4" />
                         <span>Approve</span>
                       </button>
                       <button
-                        onClick={() => handleReject(doctor.id)}
+                        onClick={() => handleReject(doctor._id)}
                         className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
                       >
                         <UserX className="h-4 w-4" />
