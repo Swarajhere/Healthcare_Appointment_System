@@ -370,7 +370,7 @@ const Register = () => {
           </form>
 
           {/* Login Link */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
             <p className="text-center text-sm text-gray-600">
               Already have an account?{" "}
               <NavLink
@@ -378,6 +378,15 @@ const Register = () => {
                 className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
               >
                 Sign in here
+              </NavLink>
+            </p>
+            <p>
+              Are you a doctor?{" "}
+              <NavLink
+                to="/doctor-register"
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+              >
+                Register as a doctor
               </NavLink>
             </p>
           </div>

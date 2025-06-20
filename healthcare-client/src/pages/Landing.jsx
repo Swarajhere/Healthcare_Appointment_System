@@ -16,6 +16,8 @@ import {
   Calendar,
   Award,
   Activity,
+  UserPlus,
+  ArrowRight,
 } from "lucide-react";
 
 function Landing() {
@@ -113,14 +115,17 @@ function Landing() {
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                 Experience world-class healthcare with our team of expert
                 doctors, state-of-the-art facilities, and personalized patient
-                care. Book your appointment today and take the first step
-                towards better health.
+                care. Join our platform today and take the first step towards
+                better health.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="bg-blue-600 text-white px-8 py-4 rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Book Appointment
-                </button>
+                <a
+                  href="/register"
+                  className="bg-blue-600 text-white px-8 py-4 rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center"
+                >
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  Get Started
+                </a>
                 <button className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-full hover:border-blue-600 hover:text-blue-600 transition-all duration-300 flex items-center justify-center">
                   <Phone className="h-5 w-5 mr-2" />
                   Emergency: (911) 123-4567
@@ -248,64 +253,74 @@ function Landing() {
               </div>
             </div>
             <div className="bg-white p-8 rounded-3xl shadow-xl">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Quick Appointment
+              <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                Join CareConnect Today
               </h3>
-              <form className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="fullName"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+              <p className="text-gray-600 mb-8 text-center">
+                Choose your registration type to get started with our healthcare
+                platform
+              </p>
+
+              <div className="space-y-4">
+                {/* Patient Registration */}
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-blue-600 p-2 rounded-lg mr-3">
+                      <Users className="h-5 w-5 text-white" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      For Patients
+                    </h4>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Book appointments, manage your health records, and connect
+                    with our expert doctors
+                  </p>
+                  <a
+                    href="/register"
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center justify-center"
                   >
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="fullName"
-                    name="fullName"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                    Register as Patient
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </a>
                 </div>
-                <div>
-                  <label
-                    htmlFor="phoneNumber"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+
+                {/* Doctor Registration */}
+                <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-2xl border border-green-200">
+                  <div className="flex items-center mb-3">
+                    <div className="bg-green-600 p-2 rounded-lg mr-3">
+                      <Stethoscope className="h-5 w-5 text-white" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      For Healthcare Professionals
+                    </h4>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Join our medical team and provide exceptional care to
+                    patients worldwide
+                  </p>
+                  <a
+                    href="/doctor-register"
+                    className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium flex items-center justify-center"
                   >
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                    Register as Doctor
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </a>
                 </div>
-                <div>
-                  <label
-                    htmlFor="serviceNeeded"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Service Needed
-                  </label>
-                  <select
-                    id="serviceNeeded"
-                    name="serviceNeeded"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select a service</option>
-                    <option value="general">General Consultation</option>
-                    <option value="cardiology">Cardiology</option>
-                    <option value="neurology">Neurology</option>
-                    <option value="pediatrics">Pediatrics</option>
-                  </select>
+
+                {/* Login Link */}
+                <div className="text-center pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Already have an account?{" "}
+                    <a
+                      href="/login"
+                      className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                    >
+                      Sign in here
+                    </a>
+                  </p>
                 </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-                >
-                  Request Appointment
-                </button>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -385,7 +400,7 @@ function Landing() {
                 Email Us
               </h3>
               <p className="text-gray-600 mb-2">General Information</p>
-              <p className="text-blue-600 font-medium">info@careconnect.com</p>
+              <p className="text-blue-600 font-medium">admin@careconnect.com</p>
               <p className="text-gray-600 mt-2">Appointments</p>
               <p className="text-blue-600 font-medium">
                 appointments@careconnect.com
@@ -449,26 +464,26 @@ function Landing() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="/register"
                     className="hover:text-white transition-colors duration-200"
                   >
-                    Find a Doctor
+                    Patient Registration
                   </a>
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="/doctor-register"
                     className="hover:text-white transition-colors duration-200"
                   >
-                    Patient Portal
+                    Doctor Registration
                   </a>
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="/login"
                     className="hover:text-white transition-colors duration-200"
                   >
-                    Insurance
+                    Sign In
                   </a>
                 </li>
               </ul>
