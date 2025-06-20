@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { verifyOtpAndReset } from "../api/verifyOtpAndReset";
 import {
@@ -11,9 +11,11 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle,
+  Mail,
 } from "lucide-react";
 
 const VerifyOtpAndReset = () => {
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,8 +25,6 @@ const VerifyOtpAndReset = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const email = location.state?.email || "";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +32,7 @@ const VerifyOtpAndReset = () => {
     setSuccess("");
     setLoading(true);
 
-    if (!otp || !newPassword || !confirmPassword) {
+    if (!email || !otp || !newPassword || !confirmPassword) {
       setError("All fields are required.");
       toast.error("All fields are required.");
       setLoading(false);
@@ -47,7 +47,6 @@ const VerifyOtpAndReset = () => {
     }
 
     try {
-      console.log('Verifying OTP and resetting password for email:', {email,otp, newPassword, confirmPassword});
       const response = await verifyOtpAndReset({ email, otp, newPassword, confirmPassword });
       setSuccess(response.message || "Password reset successful");
       toast.success(response.message || "Password reset successful");
@@ -67,7 +66,7 @@ const VerifyOtpAndReset = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Verify OTP & Reset Password</h1>
-          <p className="text-gray-600">Enter the OTP sent to {email} and your new password</p>
+          <p className="text-gray-600">Enter your email, the OTP sent to it, and your new password</p>
         </div>
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="flex items-center mb-6">
@@ -87,6 +86,25 @@ const VerifyOtpAndReset = () => {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  placeholder="Enter your email address"
+                  required
+                />
+              </div>
+            </div>
             <div>
               <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
                 OTP

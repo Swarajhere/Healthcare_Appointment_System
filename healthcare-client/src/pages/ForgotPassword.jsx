@@ -42,7 +42,7 @@ const ForgotPassword = () => {
       setSuccess(response.message || "OTP sent to your email");
       toast.success(response.message || "OTP sent to your email");
       setTimeout(() => {
-        navigate("/verify-otp-reset", { state: { email: trimmedEmail } });
+        navigate("/verify-otp-reset");
       }, 2000);
     } catch (err) {
       console.error('ForgotPassword error:', err);
