@@ -17,7 +17,7 @@ import {
   Timer,
   UserCheck,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isBefore, parse } from "date-fns";
 
 const DoctorDashboard = () => {
   const dispatch = useDispatch();
@@ -30,21 +30,49 @@ const DoctorDashboard = () => {
     dispatch(fetchDoctorAppointments(user.id));
   }, [dispatch, user.id]);
 
+  // Current IST time
+  const currentTime = new Date();
+  const currentDate = format(currentTime, "yyyy-MM-dd");
+
+  // Separate appointments into completed and upcoming
+  const completedAppointments = appointments.filter((apt) => {
+    const aptDateTime = parse(
+      `${apt.date} ${apt.time}`,
+      "yyyy-MM-dd HH:mm",
+      new Date()
+    );
+    return (
+      isBefore(new Date(apt.date), new Date(currentDate)) ||
+      (apt.date === currentDate && isBefore(aptDateTime, currentTime))
+    );
+  });
+
+  const upcomingAppointments = appointments.filter((apt) => {
+    const aptDateTime = parse(
+      `${apt.date} ${apt.time}`,
+      "yyyy-MM-dd HH:mm",
+      new Date()
+    );
+    return (
+      apt.date > currentDate ||
+      (apt.date === currentDate && !isBefore(aptDateTime, currentTime))
+    );
+  });
+
   // Calculate statistics
   const totalAppointments = appointments.length;
   const todayAppointments = appointments.filter(
-    (apt) =>
-      format(new Date(apt.date), "yyyy-MM-dd") ===
-      format(new Date(), "yyyy-MM-dd")
+    (apt) => apt.date === currentDate
   ).length;
-  const completedAppointments = appointments.filter(
-    (apt) => apt.status === "completed"
-  ).length;
-  const pendingAppointments = appointments.filter(
-    (apt) => apt.status === "scheduled"
+  const completedAppointmentsCount = completedAppointments.length;
+  const pendingAppointments = upcomingAppointments.filter(
+    (apt) => apt.status === "confirmed"
   ).length;
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status, isCompleted) => {
+    if (isCompleted) {
+      return <CheckCircle className="h-4 w-4" />;
+    }
     switch (status.toLowerCase()) {
       case "completed":
         return <CheckCircle className="h-4 w-4" />;
@@ -57,7 +85,10 @@ const DoctorDashboard = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status, isCompleted) => {
+    if (isCompleted) {
+      return "bg-green-100 text-green-800 border-green-200";
+    }
     switch (status.toLowerCase()) {
       case "completed":
         return "bg-green-100 text-green-800 border-green-200";
@@ -85,7 +116,7 @@ const DoctorDashboard = () => {
                   Welcome back, Dr. {user?.firstName}
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Here's an overview of your appointments today
+                  Here's an overview of your appointments
                 </p>
               </div>
             </div>
@@ -141,7 +172,7 @@ const DoctorDashboard = () => {
                   Completed
                 </p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {completedAppointments}
+                  {completedAppointmentsCount}
                 </p>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
@@ -180,13 +211,13 @@ const DoctorDashboard = () => {
           </div>
         )}
 
-        {/* Appointments Section */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Upcoming Appointments Section */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-6">
             <div className="flex items-center space-x-3">
               <Calendar className="h-6 w-6 text-white" />
               <h2 className="text-2xl font-bold text-white">
-                Your Appointments
+                Upcoming Appointments
               </h2>
             </div>
           </div>
@@ -201,24 +232,24 @@ const DoctorDashboard = () => {
                   </p>
                 </div>
               </div>
-            ) : appointments.length === 0 ? (
+            ) : upcomingAppointments.length === 0 ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center max-w-md">
                   <div className="bg-gray-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
                     <Users className="h-12 w-12 text-gray-400" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    No Appointments Yet
+                    No Upcoming Appointments
                   </h3>
                   <p className="text-gray-600 text-lg leading-relaxed">
-                    You don't have any scheduled appointments at the moment. New
+                    You don't have any upcoming appointments at the moment. New
                     appointments will appear here once patients book with you.
                   </p>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {appointments.map((appointment, index) => (
+                {upcomingAppointments.map((appointment, index) => (
                   <div
                     key={`${appointment.date}_${appointment.time}_${index}`}
                     className="group bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1"
@@ -257,13 +288,106 @@ const DoctorDashboard = () => {
                       <div className="flex items-center space-x-3">
                         <div
                           className={`flex items-center space-x-2 px-4 py-2 rounded-full border font-medium text-sm ${getStatusColor(
-                            appointment.status
+                            appointment.status,
+                            false
                           )}`}
                         >
-                          {getStatusIcon(appointment.status)}
+                          {getStatusIcon(appointment.status, false)}
                           <span className="capitalize">
                             {appointment.status}
                           </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Completed Appointments Section */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-teal-700 px-8 py-6">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="h-6 w-6 text-white" />
+              <h2 className="text-2xl font-bold text-white">
+                Completed Appointments
+              </h2>
+            </div>
+          </div>
+
+          <div className="p-8">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg">
+                    Loading your appointments...
+                  </p>
+                </div>
+              </div>
+            ) : completedAppointments.length === 0 ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center max-w-md">
+                  <div className="bg-gray-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                    <Users className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    No Completed Appointments
+                  </h3>
+                  <p className="text-gray-600 text-lg leading-relaxed">
+                    You don't have any completed appointments at the moment.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {completedAppointments.map((appointment, index) => (
+                  <div
+                    key={`${appointment.date}_${appointment.time}_${index}`}
+                    className="group bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-green-200 transition-all duration-300 transform hover:-translate-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-green-100 p-3 rounded-full group-hover:bg-green-200 transition-colors duration-300">
+                          <User className="h-6 w-6 text-green-600" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-green-900 transition-colors duration-200">
+                            {appointment.patientName}
+                          </h3>
+                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                            <div className="flex items-center space-x-2">
+                              <Calendar className="h-4 w-4 text-blue-500" />
+                              <span className="font-medium">
+                                {format(
+                                  new Date(appointment.date),
+                                  "EEEE, MMM d, yyyy"
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4 text-green-500" />
+                              <span className="font-medium">
+                                {format(
+                                  new Date(`1970-01-01T${appointment.time}:00`),
+                                  "h:mm a"
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`flex items-center space-x-2 px-4 py-2 rounded-full border font-medium text-sm ${getStatusColor(
+                            appointment.status,
+                            true
+                          )}`}
+                        >
+                          {getStatusIcon(appointment.status, true)}
+                          <span className="capitalize">Completed</span>
                         </div>
                       </div>
                     </div>
