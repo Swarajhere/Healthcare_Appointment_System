@@ -65,7 +65,10 @@ exports.getAvailability = async (req, res) => {
     }
 
     const availability = await Availability.findOne({ doctorId });
-    const { start, end } = availability?.defaultHours || {
+    const customHours = availability?.customHours?.find(
+      (ch) => ch.date === date
+    );
+    const { start, end } = customHours || availability?.defaultHours || {
       start: "09:00",
       end: "15:00",
     };
@@ -254,6 +257,81 @@ exports.getDoctorAppointments = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to fetch appointments",
+    });
+  }
+};
+
+
+exports.updateDoctorHours = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const { date, start, end } = req.body;
+
+    if (!date.match(/^\d{4}-\d{2}-\d{2}$/) || !start.match(/^\d{2}:\d{2}$/) || !end.match(/^\d{2}:\d{2}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date or time format",
+      });
+    }
+
+    const doctor = await User.findOne({
+      _id: doctorId,
+      role: "doctor",
+      status: "approved",
+      isActive: true,
+    });
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found or not approved",
+      });
+    }
+
+    // Validate date is not in the past
+    const currentTime = new Date();
+    if (date < format(currentTime, "yyyy-MM-dd")) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot set hours for past dates",
+      });
+    }
+
+    // Validate start time is before end time
+    const startTime = parse(start, "HH:mm", new Date());
+    const endTime = parse(end, "HH:mm", new Date());
+    if (!isBefore(startTime, endTime)) {
+      return res.status(400).json({
+        success: false,
+        message: "Start time must be before end time",
+      });
+    }
+
+    // Update or add custom hours
+    let availability = await Availability.findOne({ doctorId });
+    if (!availability) {
+      availability = new Availability({ doctorId, customHours: [] });
+    }
+
+    const existingCustomHoursIndex = availability.customHours.findIndex(
+      (ch) => ch.date === date
+    );
+    if (existingCustomHoursIndex !== -1) {
+      availability.customHours[existingCustomHoursIndex] = { date, start, end };
+    } else {
+      availability.customHours.push({ date, start, end });
+    }
+
+    await availability.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Doctor hours updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in updateDoctorHours:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update doctor hours",
     });
   }
 };

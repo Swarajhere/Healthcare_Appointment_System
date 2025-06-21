@@ -4,6 +4,7 @@ const {
   getAvailability,
   bookAppointment,
   getDoctorAppointments,
+  updateDoctorHours,
 } = require("../controllers/appointmentController");
 const { verifyToken, restrictTo } = require("../middlewares/auth-middleware");
 
@@ -25,6 +26,12 @@ router.get(
   verifyToken,
   restrictTo(["doctor"]),
   getDoctorAppointments
+);
+router.post(
+  "/doctors/:doctorId/availability/hours",
+  verifyToken,
+  restrictTo(["doctor"]),
+  updateDoctorHours
 );
 
 module.exports = router;

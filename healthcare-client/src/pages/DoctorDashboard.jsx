@@ -1,23 +1,29 @@
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDoctorAppointments } from "../redux/slice/appointmentSlice";
+import {
+  fetchDoctorAppointments,
+  updateDoctorHoursThunk,
+} from "../redux/slice/appointmentSlice";
 import {
   Stethoscope,
   Calendar,
   Users,
   Loader2,
-  AlertCircle,
   Clock,
   User,
   Activity,
   CheckCircle,
   XCircle,
   AlertTriangle,
+  AlertCircle,
+  Check,
   CalendarDays,
   Timer,
   UserCheck,
+  Plus,
 } from "lucide-react";
 import { format, isBefore, parse } from "date-fns";
+import { toast } from "react-hot-toast";
 
 const DoctorDashboard = () => {
   const dispatch = useDispatch();
@@ -25,6 +31,13 @@ const DoctorDashboard = () => {
   const { appointments, loading, error } = useSelector(
     (state) => state.appointment
   );
+  const [showHoursForm, setShowHoursForm] = useState(false);
+  const [hoursFormData, setHoursFormData] = useState({
+    date: format(new Date(), "yyyy-MM-dd"),
+    start: "09:00",
+    end: "17:00",
+  });
+  const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
     dispatch(fetchDoctorAppointments(user.id));
@@ -34,7 +47,7 @@ const DoctorDashboard = () => {
   const currentTime = new Date();
   const currentDate = format(currentTime, "yyyy-MM-dd");
 
-  // Separate appointments into completed and upcoming
+  // Separate completed and upcoming appointments
   const completedAppointments = appointments.filter((apt) => {
     const aptDateTime = parse(
       `${apt.date} ${apt.time}`,
@@ -101,6 +114,53 @@ const DoctorDashboard = () => {
     }
   };
 
+  const handleHoursFormSubmit = async (e) => {
+    e.preventDefault();
+    const errors = {};
+
+    // Validate date
+    if (hoursFormData.date < currentDate) {
+      errors.date = "Cannot set hours for past dates";
+    }
+
+    // Validate times
+    const startTime = parse(hoursFormData.start, "HH:mm", new Date());
+    const endTime = parse(hoursFormData.end, "HH:mm", new Date());
+    if (!isBefore(startTime, endTime)) {
+      errors.start = "Start time must be before end time";
+    }
+
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    try {
+      await dispatch(
+        updateDoctorHoursThunk({
+          doctorId: user.id,
+          date: hoursFormData.date,
+          start: hoursFormData.start,
+          end: hoursFormData.end,
+        })
+      ).unwrap();
+      toast.success("Availability hours updated successfully");
+      setShowHoursForm(false);
+      setHoursFormData({
+        date: format(new Date(), "yyyy-MM-dd"),
+        start: "09:00",
+        end: "17:00",
+      });
+    } catch (err) {
+      toast.error(err.message || "Failed to update hours");
+    }
+  };
+
+  const handleFormChange = (e, field) => {
+    setHoursFormData({ ...hoursFormData, [field]: e.target.value });
+    if (formErrors[field]) {
+      setFormErrors({ ...formErrors, [field]: undefined });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header Section */}
@@ -131,6 +191,106 @@ const DoctorDashboard = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8">
+        {/* Set Custom Hours Button */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowHoursForm(!showHoursForm)}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium shadow-lg"
+          >
+            <Plus size={20} />
+            {showHoursForm ? "Hide Custom Hours Form" : "Set Custom Hours"}
+          </button>
+        </div>
+
+        {/* Custom Hours Form */}
+        {showHoursForm && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Set Custom Availability Hours
+            </h3>
+            <form onSubmit={handleHoursFormSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={hoursFormData.date}
+                  onChange={(e) => handleFormChange(e, "date")}
+                  min={currentDate}
+                  className={`w-full px-3 py-2 rounded-lg border ${
+                    formErrors.date
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+                {formErrors.date && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.date}</p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={hoursFormData.start}
+                    onChange={(e) => handleFormChange(e, "start")}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      formErrors.start
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                  {formErrors.start && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {formErrors.start}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={hoursFormData.end}
+                    onChange={(e) => handleFormChange(e, "end")}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      formErrors.end
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                  {formErrors.end && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {formErrors.end}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+                >
+                  <Check size={20} />
+                  Save Hours
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowHoursForm(false)}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:ring-2 focus:ring-gray-400"
+                >
+                  <XCircle size={20} />
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">

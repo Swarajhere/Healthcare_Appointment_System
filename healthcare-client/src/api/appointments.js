@@ -74,3 +74,21 @@ export const getDoctorAppointments = async (doctorId) => {
     throw new Error(error.response?.data?.message || "Failed to fetch appointments");
   }
 };
+
+export const updateDoctorHours = async (doctorId, date, start, end) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${API_URL}/doctors/${doctorId}/availability/hours`,
+      { date, start, end },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Failed to update doctor hours");
+  }
+};
