@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from './slice/authSlice';
 import adminReducer from "./slice/adminSlice"; // New slice
+import appointmentReducer from './slice/appointmentSlice';
 
 const loadState = () => {
   try {
@@ -33,6 +34,7 @@ const store = configureStore({
   reducer: {
     auth: authReducer,
     admin: adminReducer,
+    appointment: appointmentReducer,
   },
   preloadedState,
 });

@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
+import AppointmentConfirmed from "./components/AppointmentConfirmed";
 import VerifyOtpAndReset from "./pages/VerifyOtpAndReset";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -67,11 +68,14 @@ function App() {
             }
           />
           <Route path="/login" element={<Login />} />
-          <Route path="/reset-password" element={
-            <ProtectedRoute>
-              <ResetPassword />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/reset-password"
+            element={
+              <ProtectedRoute>
+                <ResetPassword />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp-reset" element={<VerifyOtpAndReset />} />
           <Route path="/register" element={<Register />} />
@@ -97,6 +101,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <BookAppointment />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/appointment-confirmed"
+            element={
+              <ProtectedRoute>
+                <AppointmentConfirmed />
               </ProtectedRoute>
             }
           />
