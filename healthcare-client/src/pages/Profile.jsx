@@ -181,7 +181,13 @@ const Profile = () => {
       <div className="w-full max-w-lg">
         <div className="mb-6">
           <button
-            onClick={() => navigate("/")}
+            onClick={() =>{
+              if(user?.role === "doctor") {
+                navigate("/doctor-dashboard");
+              } else {
+                navigate("/home");
+              }
+            }}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium shadow-lg"
           >
             <ArrowLeft size={20} />
