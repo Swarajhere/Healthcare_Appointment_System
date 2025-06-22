@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -89,7 +87,7 @@ function Home() {
     id: doctor.id,
     name: `Dr. ${doctor.firstName} ${doctor.lastName}`,
     specialization: doctor.specialty,
-    yearsOfExperience: doctor.yearsOfExperience,
+    yearsOfExperience: doctor.yearsOfExperience ?? doctor.experience ?? 0, // fallback if needed
     availability: "Available Today",
     image:
       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
@@ -444,7 +442,10 @@ function Home() {
                         </span>
                         <span className="text-sm text-gray-600 flex items-center">
                           <Award className="h-4 w-4 mr-1" />
-                          {doctor.yearsOfExperience} years
+                          {doctor.yearsOfExperience !== undefined &&
+                          doctor.yearsOfExperience !== null
+                            ? `${doctor.yearsOfExperience} years`
+                            : "N/A"}
                         </span>
                       </div>
                       <button
