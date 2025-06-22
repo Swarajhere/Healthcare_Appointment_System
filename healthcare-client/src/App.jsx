@@ -1,5 +1,6 @@
 import React from "react";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Landing from "./pages/Landing";
@@ -55,76 +56,79 @@ function App() {
   );
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       {showNavbar && <Navbar />}
       <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/reset-password"
-            element={
-              <ProtectedRoute>
-                <ResetPassword />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp-reset" element={<VerifyOtpAndReset />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/doctor-register" element={<DoctorRegister />} />
-          <Route
-            path="/admin-dashboard"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/doctor-dashboard"
-            element={
-              <ProtectedRoute requiredRole="doctor">
-                <DoctorDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-appointments"
-            element={
-              <ProtectedRoute>
-                <MyAppointments />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/book-appointment"
-            element={
-              <ProtectedRoute>
-                <BookAppointment />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/appointment-confirmed"
-            element={
-              <ProtectedRoute>
-                <AppointmentConfirmed />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/profile" element={<Profile userId={user?.id} />} />
-          <Route path="/logout" element={<Logout />} />
-        </Routes>
+        <div className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/reset-password"
+              element={
+                <ProtectedRoute>
+                  <ResetPassword />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp-reset" element={<VerifyOtpAndReset />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/doctor-register" element={<DoctorRegister />} />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doctor-dashboard"
+              element={
+                <ProtectedRoute requiredRole="doctor">
+                  <DoctorDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-appointments"
+              element={
+                <ProtectedRoute>
+                  <MyAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/book-appointment"
+              element={
+                <ProtectedRoute>
+                  <BookAppointment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/appointment-confirmed"
+              element={
+                <ProtectedRoute>
+                  <AppointmentConfirmed />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/profile" element={<Profile userId={user?.id} />} />
+            <Route path="/logout" element={<Logout />} />
+          </Routes>
+        </div>
       </ErrorBoundary>
+      {showNavbar && <Footer />}
     </div>
   );
 }
