@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Navigate } from "react-router-dom";
-import { fetchPatientAppointments } from "../redux/slice/appointmentSlice";
+import {
+  fetchDoctors,
+  fetchPatientAppointments,
+} from "../redux/slice/appointmentSlice";
 import {
   Heart,
   Calendar,
@@ -19,8 +22,9 @@ import {
   TrendingUp,
   Search,
   Filter,
-  Loader2,
   X,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
@@ -29,7 +33,7 @@ function Home() {
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const { user } = useSelector((state) => state.auth);
-  const { patientAppointments, loading, error } = useSelector(
+  const { doctors, patientAppointments, loading, error } = useSelector(
     (state) => state.appointment
   );
   const navigate = useNavigate();
@@ -48,6 +52,10 @@ function Home() {
         console.error("Fetch patient appointments error:", err);
         toast.error(err.message || "Failed to load appointments");
       });
+      dispatch(fetchDoctors()).catch((err) => {
+        console.error("Fetch doctors error:", err);
+        toast.error(err.message || "Failed to load doctors");
+      });
     }
   }, [dispatch, user?.id, user?.role]);
 
@@ -64,61 +72,29 @@ function Home() {
 
   // Filter upcoming appointments (confirmed and not in the past)
   const currentDateTime = new Date();
+  const currentDate = format(currentDateTime, "yyyy-MM-dd");
   const upcomingAppointments = patientAppointments
     .filter((appt) => {
-      const apptDateTime = new Date(`${appt.date}T${appt.time}:00`);
+      const apptDateTime = new Date(`${appt.date}T${appt.time}:00+05:30`);
       return (
         appt.status === "confirmed" &&
-        (appt.date > format(currentDateTime, "yyyy-MM-dd") ||
-          (appt.date === format(currentDateTime, "yyyy-MM-dd") &&
-            apptDateTime >= currentDateTime))
+        (appt.date > currentDate ||
+          (appt.date === currentDate && apptDateTime >= currentDateTime))
       );
     })
     .slice(0, 2); // Limit to first 2
 
-  // Enhanced mock data
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. John Smith",
-      specialization: "Cardiology",
-      rating: 4.9,
-      experience: "15+ years",
-      availability: "Available Today",
-      image:
-        "https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: 2,
-      name: "Dr. Emily Johnson",
-      specialization: "Neurology",
-      rating: 4.8,
-      experience: "12+ years",
-      availability: "Available Tomorrow",
-      image:
-        "https://images.pexels.com/photos/5452293/pexels-photo-5452293.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: 3,
-      name: "Dr. Michael Chen",
-      specialization: "Orthopedics",
-      rating: 4.9,
-      experience: "18+ years",
-      availability: "Available Today",
-      image:
-        "https://images.pexels.com/photos/6749778/pexels-photo-6749778.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: 4,
-      name: "Dr. Sarah Patel",
-      specialization: "Pediatrics",
-      rating: 5.0,
-      experience: "10+ years",
-      availability: "Available Today",
-      image:
-        "https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-  ];
+  // Map doctors data with mock fields for rating, experience, and availability
+  const enhancedDoctors = doctors.map((doctor) => ({
+    id: doctor.id,
+    name: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+    specialization: doctor.specialty,
+    rating: (Math.random() * (5.0 - 4.8) + 4.8).toFixed(1), // Mock rating between 4.8 and 5.0
+    experience: `${Math.floor(Math.random() * 10 + 10)}+ years`, // Mock experience 10+ to 19+ years
+    availability:
+      doctor.id % 2 === 0 ? "Available Today" : "Available Tomorrow", // Mock availability
+    image: "/placeholder.svg", // Placeholder image
+  }));
 
   const services = [
     {
@@ -235,9 +211,7 @@ function Home() {
                   <span className="hidden sm:inline">
                     Emergency: (911) 123-4567
                   </span>
-                  <span className="sm Perspective: sm:hidden">
-                    Emergency Call
-                  </span>
+                  <span className="sm:hidden">Emergency Call</span>
                 </button>
               </div>
             </div>
@@ -448,53 +422,92 @@ function Home() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {doctors.map((doctor) => (
-              <div
-                key={doctor.id}
-                className="bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 group overflow-hidden"
-              >
-                <div className="relative">
-                  <img
-                    src={doctor.image || "/placeholder.svg"}
-                    alt={doctor.name}
-                    className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-white rounded-full px-2 py-1 flex items-center space-x-1">
-                    <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                    <span className="text-xs font-medium">{doctor.rating}</span>
-                  </div>
-                </div>
-                <div className="p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">
-                    {doctor.name}
-                  </h3>
-                  <p className="text-blue-600 font-medium mb-2 text-sm sm:text-base">
-                    {doctor.specialization}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-3">
-                    {doctor.experience}
-                  </p>
-                  <div className="flex items-center justify-between mb-4">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        doctor.availability === "Available Today"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {doctor.availability}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => navigate("/book-appointment")}
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm sm:text-base"
-                  >
-                    Book Appointment
-                  </button>
+          {/* Doctors List */}
+          <div className="py-8">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg">Loading doctors...</p>
                 </div>
               </div>
-            ))}
+            ) : error ? (
+              <div className="p-6 bg-red-50 border border-red-200 rounded-2xl flex items-start space-x-3">
+                <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-red-800 font-semibold mb-1">
+                    Error Loading Doctors
+                  </h3>
+                  <p className="text-red-700">{error}</p>
+                </div>
+              </div>
+            ) : enhancedDoctors.length === 0 ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center max-w-md">
+                  <div className="bg-gray-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                    <Users className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    No Doctors Available
+                  </h3>
+                  <p className="text-gray-600 text-lg leading-relaxed">
+                    No doctors are available at the moment. Please try again
+                    later.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+                {enhancedDoctors.map((doctor) => (
+                  <div
+                    key={doctor.id}
+                    className="bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 group overflow-hidden"
+                  >
+                    <div className="relative">
+                      <img
+                        src={doctor.image}
+                        alt={doctor.name}
+                        className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-white rounded-full px-2 py-1 flex items-center space-x-1">
+                        <Star className="h-3 w-3 text-yellow-400 fill-current" />
+                        <span className="text-xs font-medium">
+                          {doctor.rating}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4 sm:p-6">
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">
+                        {doctor.name}
+                      </h3>
+                      <p className="text-blue-600 font-medium mb-2 text-sm sm:text-base">
+                        {doctor.specialization}
+                      </p>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-3">
+                        {doctor.experience}
+                      </p>
+                      <div className="flex items-center justify-between mb-4">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            doctor.availability === "Available Today"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {doctor.availability}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => navigate("/book-appointment")}
+                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm sm:text-base"
+                      >
+                        Book Appointment
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
