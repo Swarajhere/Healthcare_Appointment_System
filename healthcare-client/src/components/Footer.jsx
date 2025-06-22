@@ -4,7 +4,7 @@ import { Heart, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } fr
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+    <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -79,7 +79,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-blue-500">
+        <div className="mt-12 pt-8 border-t border-gray-700">
           <p className="text-center text-gray-200">
             © {new Date().getFullYear()} CareConnect. All rights reserved.
           </p>
