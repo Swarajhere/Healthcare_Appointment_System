@@ -84,16 +84,14 @@ function Home() {
     })
     .slice(0, 2); // Limit to first 2
 
-  // Map doctors data with mock fields for rating, experience, and availability
+  // Map doctors data with mock fields for availability
   const enhancedDoctors = doctors.map((doctor) => ({
     id: doctor.id,
     name: `Dr. ${doctor.firstName} ${doctor.lastName}`,
     specialization: doctor.specialty,
-    rating: (Math.random() * (5.0 - 4.8) + 4.8).toFixed(1), // Mock rating between 4.8 and 5.0
-    experience: `${Math.floor(Math.random() * 10 + 10)}+ years`, // Mock experience 10+ to 19+ years
-    availability:
-      doctor.id % 2 === 0 ? "Available Today" : "Available Tomorrow", // Mock availability
-    image: "/placeholder.svg", // Placeholder image
+    availability: "Available Today",
+    image:
+      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80",
   }));
 
   const services = [
@@ -469,12 +467,6 @@ function Home() {
                         alt={doctor.name}
                         className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-white rounded-full px-2 py-1 flex items-center space-x-1">
-                        <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                        <span className="text-xs font-medium">
-                          {doctor.rating}
-                        </span>
-                      </div>
                     </div>
                     <div className="p-4 sm:p-6">
                       <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">
@@ -482,9 +474,6 @@ function Home() {
                       </h3>
                       <p className="text-blue-600 font-medium mb-2 text-sm sm:text-base">
                         {doctor.specialization}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-600 mb-3">
-                        {doctor.experience}
                       </p>
                       <div className="flex items-center justify-between mb-4">
                         <span

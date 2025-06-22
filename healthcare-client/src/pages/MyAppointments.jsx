@@ -57,7 +57,8 @@ const MyAppointments = () => {
   });
 
   const completedAppointments = patientAppointments.filter((appt) => {
-    return appt.status === "completed";
+    const apptDateTime = new Date(`${appt.date}T${appt.time}:00+05:30`);
+    return appt.date < currentDate || (appt.date === currentDate && apptDateTime < currentDateTime);
   });
 
   return (
