@@ -2,7 +2,22 @@ import React from "react";
 import { format, parse, isBefore, addMinutes } from "date-fns";
 import { Clock, X, CheckCircle, AlertCircle } from "lucide-react";
 
-const TimeSlotGrid = ({ slots, onSelectSlot, selectedDate }) => {
+const TimeSlotGrid = ({ slots = [], onSelectSlot, selectedDate }) => {
+  // Ensure slots is an array
+  if (!Array.isArray(slots)) {
+    console.warn('TimeSlotGrid: slots prop must be an array');
+    return (
+      <div className="bg-gray-50 rounded-2xl p-8 text-center">
+        <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Invalid Time Slots Format
+        </h3>
+        <p className="text-gray-600">
+          There was an error loading the time slots. Please try again.
+        </p>
+      </div>
+    );
+  }
   // Use actual IST time
   const currentTime = new Date();
   const currentDate = format(currentTime, "yyyy-MM-dd");

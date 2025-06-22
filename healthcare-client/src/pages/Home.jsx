@@ -1,8 +1,7 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Navigate } from "react-router-dom";
+import { fetchPatientAppointments } from "../redux/slice/appointmentSlice";
 import {
   Heart,
   Calendar,
@@ -20,11 +19,19 @@ import {
   TrendingUp,
   Search,
   Filter,
+  Loader2,
   X,
 } from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "react-hot-toast";
 
 function Home() {
+  const dispatch = useDispatch();
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const { user } = useSelector((state) => state.auth);
+  const { patientAppointments, loading, error } = useSelector(
+    (state) => state.appointment
+  );
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showFilters, setShowFilters] = useState(false);
@@ -36,6 +43,15 @@ function Home() {
   }, [isLoggedIn, navigate]);
 
   useEffect(() => {
+    if (user?.id && user?.role === "user") {
+      dispatch(fetchPatientAppointments(user.id)).catch((err) => {
+        console.error("Fetch patient appointments error:", err);
+        toast.error(err.message || "Failed to load appointments");
+      });
+    }
+  }, [dispatch, user?.id, user?.role]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -45,6 +61,20 @@ function Home() {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
+
+  // Filter upcoming appointments (confirmed and not in the past)
+  const currentDateTime = new Date();
+  const upcomingAppointments = patientAppointments
+    .filter((appt) => {
+      const apptDateTime = new Date(`${appt.date}T${appt.time}:00`);
+      return (
+        appt.status === "confirmed" &&
+        (appt.date > format(currentDateTime, "yyyy-MM-dd") ||
+          (appt.date === format(currentDateTime, "yyyy-MM-dd") &&
+            apptDateTime >= currentDateTime))
+      );
+    })
+    .slice(0, 2); // Limit to first 2
 
   // Enhanced mock data
   const doctors = [
@@ -142,25 +172,6 @@ function Home() {
     },
   ];
 
-  const upcomingAppointments = [
-    {
-      id: 1,
-      doctor: "Dr. John Smith",
-      specialty: "Cardiology",
-      date: "Today",
-      time: "2:30 PM",
-      type: "Follow-up",
-    },
-    {
-      id: 2,
-      doctor: "Dr. Emily Johnson",
-      specialty: "Neurology",
-      date: "Tomorrow",
-      time: "10:00 AM",
-      type: "Consultation",
-    },
-  ];
-
   const healthStats = [
     {
       label: "Heart Rate",
@@ -212,7 +223,10 @@ function Home() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <button className="bg-white text-blue-600 px-4 sm:px-6 py-3 rounded-full hover:bg-blue-50 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center font-medium text-sm sm:text-base">
+                <button
+                  onClick={() => navigate("/book-appointment")}
+                  className="bg-white text-blue-600 px-4 sm:px-6 py-3 rounded-full hover:bg-blue-50 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center font-medium text-sm sm:text-base"
+                >
                   <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Book New Appointment
                 </button>
@@ -221,7 +235,9 @@ function Home() {
                   <span className="hidden sm:inline">
                     Emergency: (911) 123-4567
                   </span>
-                  <span className="sm:hidden">Emergency Call</span>
+                  <span className="sm Perspective: sm:hidden">
+                    Emergency Call
+                  </span>
                 </button>
               </div>
             </div>
@@ -269,53 +285,98 @@ function Home() {
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-0">
                 Upcoming Appointments
               </h2>
-              <button className="text-blue-600 hover:text-blue-700 font-medium flex items-center text-sm sm:text-base">
-                View All
+              <button
+                onClick={() => navigate("/my-appointments")}
+                className="text-blue-600 hover:text-blue-700 font-medium flex items-center text-sm sm:text-base"
+              >
+                Show More
                 <ChevronRight className="h-4 w-4 ml-1" />
               </button>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {upcomingAppointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-200"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                    <div className="flex items-center space-x-3 mb-3 sm:mb-0">
-                      <div className="bg-blue-600 rounded-full p-2">
-                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                          {appointment.doctor}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-gray-600">
-                          {appointment.specialty}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-medium self-start sm:self-center">
-                      {appointment.type}
-                    </span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-0">
-                      <div className="flex items-center mb-1 sm:mb-0">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        {appointment.date}
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        {appointment.time}
-                      </div>
-                    </div>
-                    <button className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm self-start sm:self-center">
-                      Reschedule
-                    </button>
-                  </div>
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg">
+                    Loading your appointments...
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : error ? (
+              <div className="p-6 bg-red-50 border border-red-200 rounded-2xl flex items-start space-x-3">
+                <AlertCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-red-800 font-semibold mb-1">
+                    Error Loading Appointments
+                  </h3>
+                  <p className="text-red-700">{error}</p>
+                </div>
+              </div>
+            ) : upcomingAppointments.length === 0 ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center max-w-md">
+                  <div className="bg-gray-100 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                    <Users className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    No Upcoming Appointments
+                  </h3>
+                  <p className="text-gray-600 text-lg leading-relaxed">
+                    You don't have any upcoming appointments. Book a new one to
+                    get started.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                {upcomingAppointments.map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-200"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                      <div className="flex items-center space-x-3 mb-3 sm:mb-0">
+                        <div className="bg-blue-600 rounded-full p-2">
+                          <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                            {appointment.doctorName}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            {appointment.specialty}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-medium self-start sm:self-center">
+                        {appointment.type}
+                      </span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-0">
+                        <div className="flex items-center mb-1 sm:mb-0">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          {format(
+                            new Date(appointment.date),
+                            "EEEE, MMM d, yyyy"
+                          )}
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          {format(
+                            new Date(`1970-01-01T${appointment.time}:00`),
+                            "h:mm aa"
+                          )}
+                        </div>
+                      </div>
+                      <button className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm self-start sm:self-center">
+                        Reschedule
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -425,7 +486,10 @@ function Home() {
                       {doctor.availability}
                     </span>
                   </div>
-                  <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm sm:text-base">
+                  <button
+                    onClick={() => navigate("/book-appointment")}
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm sm:text-base"
+                  >
                     Book Appointment
                   </button>
                 </div>

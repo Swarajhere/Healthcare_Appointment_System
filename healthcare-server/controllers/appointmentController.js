@@ -261,6 +261,48 @@ exports.getDoctorAppointments = async (req, res) => {
   }
 };
 
+exports.getPatientAppointments = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    const patient = await User.findOne({
+      _id: patientId,
+      role: "user",
+    });
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    const appointments = await Appointment.find({
+      patientId,
+      status: { $in: ["confirmed", "completed"] },
+    })
+      .populate("doctorId", "firstName lastName specialty")
+      .sort({ date: -1, time: -1 });
+
+    res.status(200).json({
+      success: true,
+      appointments: appointments.map((appt) => ({
+        id: appt._id.toString(),
+        date: appt.date,
+        time: appt.time,
+        doctorName: `${appt.doctorId.firstName} ${appt.doctorId.lastName}`,
+        specialty: appt.doctorId.specialty,
+        status: appt.status,
+        type: appt.status === "confirmed" ? "Consultation" : "Follow-up",
+      })),
+    });
+  } catch (error) {
+    console.error("Error in getPatientAppointments:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch appointments",
+    });
+  }
+};
 
 exports.updateDoctorHours = async (req, res) => {
   try {

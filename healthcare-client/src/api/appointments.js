@@ -75,6 +75,20 @@ export const getDoctorAppointments = async (doctorId) => {
   }
 };
 
+export const getPatientAppointments = async (patientId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_URL}/appointments/patient/${patientId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.appointments;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Failed to fetch patient appointments");
+  }
+};
+
 export const updateDoctorHours = async (doctorId, date, start, end) => {
   try {
     const token = localStorage.getItem("token");

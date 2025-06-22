@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import AppointmentConfirmed from "./components/AppointmentConfirmed";
 import VerifyOtpAndReset from "./pages/VerifyOtpAndReset";
 import ErrorBoundary from "./components/ErrorBoundary";
+import MyAppointments from "./pages/MyAppointments";
 
 import {
   BrowserRouter,
@@ -93,6 +94,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="doctor">
                 <DoctorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-appointments"
+            element={
+              <ProtectedRoute>
+                <MyAppointments />
               </ProtectedRoute>
             }
           />

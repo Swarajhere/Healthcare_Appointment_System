@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getDoctors, getAvailability, bookAppointment, getDoctorAppointments, updateDoctorHours } from "../../api/appointments";
+import { getDoctors, getAvailability, bookAppointment, getDoctorAppointments, updateDoctorHours, getPatientAppointments } from "../../api/appointments";
+
 
 export const fetchDoctors = createAsyncThunk(
   "appointment/fetchDoctors",
@@ -49,6 +50,18 @@ export const fetchDoctorAppointments = createAsyncThunk(
   }
 );
 
+export const fetchPatientAppointments = createAsyncThunk(
+  "appointment/fetchPatientAppointments",
+  async (patientId, { rejectWithValue }) => {
+    try {
+      const appointments = await getPatientAppointments(patientId);
+      return appointments;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const updateDoctorHoursThunk = createAsyncThunk(
   "appointment/updateDoctorHours",
   async ({ doctorId, date, start, end }, { rejectWithValue }) => {
@@ -67,6 +80,7 @@ const appointmentSlice = createSlice({
     doctors: [],
     availability: {},
     appointments: [],
+    patientAppointments: [],
     loading: false,
     error: null,
   },
@@ -91,8 +105,8 @@ const appointmentSlice = createSlice({
       })
       .addCase(fetchAvailability.fulfilled, (state, action) => {
         state.loading = false;
-        const { doctorId, date, slots } = action.payload;
-        state.availability[`${doctorId}_${date}`] = slots;
+        const { doctorId, date, slots, start, end } = action.payload;
+        state.availability[`${doctorId}_${date}`] = { slots, start, end };
       })
       .addCase(fetchAvailability.rejected, (state, action) => {
         state.loading = false;
@@ -120,7 +134,19 @@ const appointmentSlice = createSlice({
       .addCase(fetchDoctorAppointments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      .addCase(fetchPatientAppointments.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPatientAppointments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.patientAppointments = action.payload;
+      })
+      .addCase(fetchPatientAppointments.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
   },
 });
 
