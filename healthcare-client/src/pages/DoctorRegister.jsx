@@ -28,6 +28,7 @@ const DoctorRegister = () => {
     password: "",
     specialty: "",
     licenseNumber: "",
+    yearsOfExperience: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +43,14 @@ const DoctorRegister = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let newValue = value;
+    if (name === "yearsOfExperience") {
+      newValue = value.replace(/\D/g, "").slice(0, 2); // Only digits, max 2 chars
+      if (newValue && parseInt(newValue, 10) > 50) {
+        newValue = "50"; // Cap at 50
+      }
+    }
+    setFormData({ ...formData, [name]: newValue });
     if (name === "email") {
       setEmailStatus("idle");
       setOtp("");
@@ -117,7 +125,10 @@ const DoctorRegister = () => {
     setLoading(true);
     setOtpError("");
     try {
-      const response = await verifyOtp({ email: formData.email.toLowerCase(), otp });
+      const response = await verifyOtp({
+        email: formData.email.toLowerCase(),
+        otp,
+      });
       if (response.success && response.verified) {
         setEmailStatus("otp_verified");
         toast.success("Email verified successfully");
@@ -149,12 +160,25 @@ const DoctorRegister = () => {
       toast.error("Please verify your email with OTP");
       return;
     }
+    if (
+      !formData.yearsOfExperience ||
+      parseInt(formData.yearsOfExperience, 10) < 0
+    ) {
+      setError("Please enter valid years of experience");
+      toast.error("Please enter valid years of experience");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
-      const response = await registerDoctor(formData);
+      const response = await registerDoctor({
+        ...formData,
+        yearsOfExperience: parseInt(formData.yearsOfExperience, 10),
+      });
       if (response.success) {
-        toast.success("Registration submitted successfully! Awaiting admin approval.");
+        toast.success(
+          "Registration submitted successfully! Awaiting admin approval."
+        );
         setTimeout(() => {
           navigate("/login");
         }, 2000);
@@ -172,7 +196,8 @@ const DoctorRegister = () => {
 
   const passwordStrength = (password) => {
     if (password.length < 6) return { strength: "weak", color: "bg-red-500" };
-    if (password.length < 10) return { strength: "medium", color: "bg-yellow-500" };
+    if (password.length < 10)
+      return { strength: "medium", color: "bg-yellow-500" };
     return { strength: "strong", color: "bg-green-500" };
   };
 
@@ -238,7 +263,10 @@ const DoctorRegister = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   First Name
                 </label>
                 <div className="relative">
@@ -259,7 +287,10 @@ const DoctorRegister = () => {
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Last Name
                 </label>
                 <div className="relative">
@@ -281,7 +312,10 @@ const DoctorRegister = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Professional Email Address
               </label>
               <div className="relative">
@@ -306,7 +340,9 @@ const DoctorRegister = () => {
                 )}
               </div>
               {emailStatus === "format_invalid" && (
-                <p className="mt-2 text-sm text-red-600">Please enter a valid email address</p>
+                <p className="mt-2 text-sm text-red-600">
+                  Please enter a valid email address
+                </p>
               )}
               {emailStatus === "checking" && (
                 <p className="mt-2 text-sm text-gray-600 flex items-center">
@@ -333,14 +369,19 @@ const DoctorRegister = () => {
               {emailStatus === "otp_sent" && (
                 <div className="mt-4 space-y-4">
                   <div>
-                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="otp"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       Enter OTP
                     </label>
                     <input
                       type="text"
                       id="otp"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                       placeholder="6-digit OTP"
                       maxLength="6"
@@ -368,7 +409,9 @@ const DoctorRegister = () => {
                       disabled={otpTimer > 0 || loading}
                       className="text-blue-600 hover:text-blue-700 text-sm disabled:text-gray-400"
                     >
-                      {otpTimer > 0 ? `Resend OTP in ${formatTimer(otpTimer)}` : "Resend OTP"}
+                      {otpTimer > 0
+                        ? `Resend OTP in ${formatTimer(otpTimer)}`
+                        : "Resend OTP"}
                     </button>
                   </div>
                 </div>
@@ -383,7 +426,10 @@ const DoctorRegister = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="specialty" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="specialty"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Medical Specialty
                 </label>
                 <div className="relative">
@@ -411,7 +457,10 @@ const DoctorRegister = () => {
               </div>
 
               <div>
-                <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="licenseNumber"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Medical License Number
                 </label>
                 <div className="relative">
@@ -433,7 +482,41 @@ const DoctorRegister = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="yearsOfExperience"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Years of Experience
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Award className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  id="yearsOfExperience"
+                  name="yearsOfExperience"
+                  value={formData.yearsOfExperience}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  placeholder="Enter years of experience"
+                  required
+                  maxLength="2"
+                />
+              </div>
+              {formData.yearsOfExperience &&
+                parseInt(formData.yearsOfExperience, 10) > 50 && (
+                  <p className="mt-2 text-sm text-red-600">
+                    Maximum 50 years allowed
+                  </p>
+                )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -513,12 +596,19 @@ const DoctorRegister = () => {
                 </div>
                 <div className="text-sm">
                   <label htmlFor="professional-terms" className="text-gray-700">
-                    I certify that I am a licensed medical professional and agree to the{" "}
-                    <a href="#" className="text-blue-600 hover:text-blue-700 transition-colors duration-200">
+                    I certify that I am a licensed medical professional and
+                    agree to the{" "}
+                    <a
+                      href="#"
+                      className="text-blue-600 hover:text-blue-700 transition-colors duration-200"
+                    >
                       Professional Code of Conduct
                     </a>{" "}
                     and{" "}
-                    <a href="#" className="text-blue-600 hover:text-blue-700 transition-colors duration-200">
+                    <a
+                      href="#"
+                      className="text-blue-600 hover:text-blue-700 transition-colors duration-200"
+                    >
                       Terms of Service
                     </a>
                   </label>
@@ -530,7 +620,8 @@ const DoctorRegister = () => {
               <div className="flex items-center">
                 <FileText className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0" />
                 <div className="text-sm text-yellow-800">
-                  <strong>Verification Required:</strong> Your credentials will be verified by our medical board before account activation.
+                  <strong>Verification Required:</strong> Your credentials will
+                  be verified by our medical board before account activation.
                 </div>
               </div>
             </div>

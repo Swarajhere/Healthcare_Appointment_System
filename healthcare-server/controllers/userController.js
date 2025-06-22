@@ -13,7 +13,7 @@ const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.id;
-    req.userRole = decoded.role; // Add role to request object
+    req.userRole = decoded.role;
     next();
   } catch (error) {
     console.error('verifyToken: Error:', error.message);
@@ -44,7 +44,6 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Doctor-specific checks
     if (user.role === 'doctor') {
       if (user.status === 'pending') {
         return res.status(403).json({ message: 'Your registration is pending admin approval.' });
@@ -77,7 +76,8 @@ const loginUser = async (req, res) => {
         role: user.role,
         specialty: user.specialty,
         licenseNumber: user.licenseNumber,
-        status: user.status, // Include status for doctors
+        yearsOfExperience: user.yearsOfExperience,
+        status: user.status,
       },
       token: accessToken,
     });
@@ -160,12 +160,11 @@ const registerUser = async (req, res) => {
   }
 };
 
-// New function for doctor registration
 const registerDoctor = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, specialty, licenseNumber } = req.body;
+    const { firstName, lastName, email, password, specialty, licenseNumber, yearsOfExperience } = req.body;
 
-    if (!firstName || !lastName || !email || !password || !specialty || !licenseNumber) {
+    if (!firstName || !lastName || !email || !password || !specialty || !licenseNumber || yearsOfExperience === undefined) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -176,6 +175,11 @@ const registerDoctor = async (req, res) => {
 
     if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const parsedYears = parseInt(yearsOfExperience, 10);
+    if (isNaN(parsedYears) || parsedYears < 0 || parsedYears > 50) {
+      return res.status(400).json({ message: 'Years of experience must be between 0 and 50' });
     }
 
     const existingUser = await User.findOne({ email });
@@ -194,10 +198,11 @@ const registerDoctor = async (req, res) => {
       role: 'doctor',
       specialty: specialty.trim(),
       licenseNumber: licenseNumber.trim(),
+      yearsOfExperience: parsedYears,
       status: 'pending',
       isActive: false,
-      age: 0, // Default value since not required for doctors
-      gender: 'Male', // Default value since not required for doctors
+      age: 0,
+      gender: 'Male',
     });
 
     await newDoctor.save();
@@ -242,6 +247,7 @@ const getUserById = async (req, res) => {
         role: user.role,
         specialty: user.specialty,
         licenseNumber: user.licenseNumber,
+        yearsOfExperience: user.yearsOfExperience,
       },
     });
   } catch (error) {
@@ -310,6 +316,7 @@ const updateUser = async (req, res) => {
         weight: user.weight,
         height: user.height,
         role: user.role,
+        yearsOfExperience: user.yearsOfExperience,
       },
     });
   } catch (error) {
@@ -413,7 +420,7 @@ const forgotPassword = async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
     user.resetPasswordOtp = otp;
     user.resetPasswordOtpExpires = otpExpires;
