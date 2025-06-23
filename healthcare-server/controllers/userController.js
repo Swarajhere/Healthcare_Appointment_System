@@ -162,10 +162,10 @@ const registerUser = async (req, res) => {
 
 const registerDoctor = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, specialty, licenseNumber, yearsOfExperience } = req.body;
+    const { firstName, lastName, email, password, specialty, licenseNumber, yearsOfExperience, clinicAddress, receptionNumber } = req.body;
 
-    if (!firstName || !lastName || !email || !password || !specialty || !licenseNumber || yearsOfExperience === undefined) {
-      return res.status(400).json({ message: 'All fields are required' });
+    if (!firstName || !lastName || !email || !password || !specialty || !licenseNumber || yearsOfExperience === undefined || !clinicAddress) {
+      return res.status(400).json({ message: 'All required fields must be provided' });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -180,6 +180,18 @@ const registerDoctor = async (req, res) => {
     const parsedYears = parseInt(yearsOfExperience, 10);
     if (isNaN(parsedYears) || parsedYears < 0 || parsedYears > 50) {
       return res.status(400).json({ message: 'Years of experience must be between 0 and 50' });
+    }
+
+    const trimmedAddress = clinicAddress.trim();
+    if (trimmedAddress.length === 0 || trimmedAddress.length > 200) {
+      return res.status(400).json({ message: 'Clinic address must be 1-200 characters' });
+    }
+
+    if (receptionNumber) {
+      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+      if (!phoneRegex.test(receptionNumber.trim())) {
+        return res.status(400).json({ message: 'Invalid reception number format' });
+      }
     }
 
     const existingUser = await User.findOne({ email });
@@ -199,6 +211,8 @@ const registerDoctor = async (req, res) => {
       specialty: specialty.trim(),
       licenseNumber: licenseNumber.trim(),
       yearsOfExperience: parsedYears,
+      clinicAddress: trimmedAddress,
+      receptionNumber: receptionNumber ? receptionNumber.trim() : undefined,
       status: 'pending',
       isActive: false,
       age: 0,

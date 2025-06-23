@@ -8,6 +8,7 @@ import {
   User,
   Stethoscope,
   AlertTriangle,
+  MapPin,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -59,6 +60,21 @@ const BookingConfirmation = ({
                     {doctor.specialty}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Clinic Address */}
+            <div className="flex items-start space-x-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+              <div className="bg-indigo-600 p-2 rounded-full flex-shrink-0">
+                <MapPin className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-600 mb-1">
+                  Clinic Address
+                </h4>
+                <p className="text-indigo-700 font-bold text-sm">
+                  {doctor.clinicAddress || "Address not provided"}
+                </p>
               </div>
             </div>
 

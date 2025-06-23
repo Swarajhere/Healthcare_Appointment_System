@@ -11,7 +11,7 @@ export const getDoctors = async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-    // console.log("Doctors fetched successfully:", response.data);
+    console.log("Doctors fetched successfully:", response.data);
     return response.data.doctors.map((doctor) => ({
       ...doctor,
       id: doctor.id.toString(),

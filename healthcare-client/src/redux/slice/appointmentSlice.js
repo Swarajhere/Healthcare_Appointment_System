@@ -7,6 +7,7 @@ export const fetchDoctors = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const doctors = await getDoctors();
+      console.log('redux00', doctors);
       return doctors;
     } catch (error) {
       return rejectWithValue(error.message);

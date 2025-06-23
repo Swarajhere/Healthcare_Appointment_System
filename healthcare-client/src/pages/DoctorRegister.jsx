@@ -17,6 +17,8 @@ import {
   CheckCircle,
   Award,
   FileText,
+  MapPin,
+  Phone,
 } from "lucide-react";
 import debounce from "lodash.debounce";
 
@@ -29,6 +31,8 @@ const DoctorRegister = () => {
     specialty: "",
     licenseNumber: "",
     yearsOfExperience: "",
+    clinicAddress: "",
+    receptionNumber: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -40,6 +44,7 @@ const DoctorRegister = () => {
   const navigate = useNavigate();
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,6 +54,10 @@ const DoctorRegister = () => {
       if (newValue && parseInt(newValue, 10) > 50) {
         newValue = "50"; // Cap at 50
       }
+    } else if (name === "receptionNumber") {
+      newValue = value.slice(0, 15); // Max 15 chars
+    } else if (name === "clinicAddress") {
+      newValue = value.slice(0, 200); // Max 200 chars
     }
     setFormData({ ...formData, [name]: newValue });
     if (name === "email") {
@@ -168,12 +177,26 @@ const DoctorRegister = () => {
       toast.error("Please enter valid years of experience");
       return;
     }
+    if (!formData.clinicAddress.trim()) {
+      setError("Please enter a valid clinic address");
+      toast.error("Please enter a valid clinic address");
+      return;
+    }
+    if (
+      formData.receptionNumber &&
+      !phoneRegex.test(formData.receptionNumber)
+    ) {
+      setError("Please enter a valid reception number");
+      toast.error("Please enter a valid reception number");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
       const response = await registerDoctor({
         ...formData,
         yearsOfExperience: parseInt(formData.yearsOfExperience, 10),
+        receptionNumber: formData.receptionNumber || undefined, // Send undefined if empty
       });
       if (response.success) {
         toast.success(
@@ -481,33 +504,96 @@ const DoctorRegister = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="yearsOfExperience"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Years of Experience
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Award className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="yearsOfExperience"
+                    name="yearsOfExperience"
+                    value={formData.yearsOfExperience}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                    placeholder="Enter years of experience"
+                    required
+                    maxLength="2"
+                  />
+                </div>
+                {formData.yearsOfExperience &&
+                  parseInt(formData.yearsOfExperience, 10) > 50 && (
+                    <p className="mt-2 text-sm text-red-600">
+                      Maximum 50 years allowed
+                    </p>
+                  )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="clinicAddress"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Clinic Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MapPin className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="clinicAddress"
+                    name="clinicAddress"
+                    value={formData.clinicAddress}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                    placeholder="Enter clinic address"
+                    required
+                    maxLength="200"
+                  />
+                </div>
+                {formData.clinicAddress &&
+                  formData.clinicAddress.length > 200 && (
+                    <p className="mt-2 text-sm text-red-600">
+                      Maximum 200 characters allowed
+                    </p>
+                  )}
+              </div>
+            </div>
+
             <div>
               <label
-                htmlFor="yearsOfExperience"
+                htmlFor="receptionNumber"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Years of Experience
+                Reception Number (Optional)
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Award className="h-5 w-5 text-gray-400" />
+                  <Phone className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
-                  id="yearsOfExperience"
-                  name="yearsOfExperience"
-                  value={formData.yearsOfExperience}
+                  id="receptionNumber"
+                  name="receptionNumber"
+                  value={formData.receptionNumber}
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-                  placeholder="Enter years of experience"
-                  required
-                  maxLength="2"
+                  placeholder="Enter reception number (e.g., +1234567890)"
+                  maxLength="15"
                 />
               </div>
-              {formData.yearsOfExperience &&
-                parseInt(formData.yearsOfExperience, 10) > 50 && (
+              {formData.receptionNumber &&
+                !phoneRegex.test(formData.receptionNumber) && (
                   <p className="mt-2 text-sm text-red-600">
-                    Maximum 50 years allowed
+                    Please enter a valid phone number
                   </p>
                 )}
             </div>

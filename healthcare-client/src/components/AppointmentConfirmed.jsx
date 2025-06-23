@@ -10,6 +10,7 @@ import {
   Stethoscope,
   Award,
   Phone,
+  MapPin,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -31,6 +32,7 @@ const AppointmentConfirmed = () => {
       ? `Dr. ${doctor.firstName} ${doctor.lastName}`
       : "Unknown Doctor";
   const doctorSpecialty = doctor?.specialty || "Unknown Specialty";
+  const doctorClinicAddress = doctor?.clinicAddress || "Unknown Address";
   const displayTime = time || "Unknown Time";
 
   return (
@@ -105,6 +107,12 @@ const AppointmentConfirmed = () => {
                   <div className="flex items-center space-x-2">
                     <Award className="h-4 w-4 text-gray-500" />
                     <span className="text-gray-600">{doctorSpecialty}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <MapPin className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-600 line-clamp-2">
+                      {doctorClinicAddress}
+                    </span>
                   </div>
                 </div>
               </div>

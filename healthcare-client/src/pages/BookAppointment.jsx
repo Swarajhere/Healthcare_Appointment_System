@@ -100,11 +100,7 @@ const BookAppointment = () => {
       }
       navigate("/appointment-confirmed", {
         state: {
-          doctor: {
-            firstName: selectedDoctor.firstName,
-            lastName: selectedDoctor.lastName,
-            specialty: selectedDoctor.specialty,
-          },
+          doctor: selectedDoctor,
           date: selectedDate.toISOString().split("T")[0],
           time: selectedTime,
         },

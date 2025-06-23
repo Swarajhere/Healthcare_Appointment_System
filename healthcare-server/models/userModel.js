@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema({
   specialty: { type: String }, // Doctor-specific field
   licenseNumber: { type: String }, // Doctor-specific field
   yearsOfExperience: { type: Number, min: 0, max: 50 }, // Doctor-specific field
+  clinicAddress: { type: String, maxlength: 200, required: true }, // Doctor-specific field
+  receptionNumber: { type: String, maxlength: 15 }, // Doctor-specific field
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' }, // For doctor approval workflow
   isActive: { type: Boolean, default: true }, // Inactive until approved for doctors
   resetPasswordOtp: { type: String }, // OTP for password reset

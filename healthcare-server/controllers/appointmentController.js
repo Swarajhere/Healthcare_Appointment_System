@@ -18,7 +18,7 @@ exports.getDoctors = async (req, res) => {
     }
 
     const doctors = await User.find(query).select(
-      "_id firstName lastName specialty yearsOfExperience"
+      "_id firstName lastName specialty yearsOfExperience clinicAddress"
     );
 
     res.status(200).json({
@@ -29,6 +29,7 @@ exports.getDoctors = async (req, res) => {
         lastName: doc.lastName,
         specialty: doc.specialty,
         yearsOfExperience: doc.yearsOfExperience ?? 0,
+        clinicAddress: doc.clinicAddress,
       })),
     });
   } catch (error) {
