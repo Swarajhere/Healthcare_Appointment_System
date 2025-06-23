@@ -3,6 +3,66 @@ const Appointment = require("../models/appointmentModel");
 const Availability = require("../models/availabilityModel");
 const { generateSlots } = require("../utils/generateSlots");
 const { addDays, format, parse, isBefore, addMinutes } = require("date-fns");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
+
+// Nodemailer transporter setup
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Use SendGrid, Amazon SES, etc., for production
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Email template function
+const createAppointmentEmail = (patientName, doctor, date, time, clinicAddress, receptionNumber) => {
+  const formattedDate = format(new Date(date), "EEEE, MMMM d, yyyy");
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <div style="text-align: center; background-color: #007bff; color: white; padding: 15px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">Appointment Confirmation</h1>
+      </div>
+      <div style="padding: 20px;">
+        <p style="font-size: 16px; color: #333;">Dear ${patientName},</p>
+        <p style="font-size: 16px; color: #333;">
+          Your appointment has been successfully booked with <strong>Dr. ${doctor.firstName} ${doctor.lastName}</strong>. Below are the details:
+        </p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr>
+            <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Doctor:</td>
+            <td style="padding: 10px; border: 1px solid #e0e0e0;">Dr. ${doctor.firstName} ${doctor.lastName} (${doctor.specialty})</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Date:</td>
+            <td style="padding: 10px; border: 1px solid #e0e0e0;">${formattedDate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Time:</td>
+            <td style="padding: 10px; border: 1px solid #e0e0e0;">${time}</td>
+          </tr>
+          <tr>
+            <td style="padding:1 0px; border: 1px solid #e0e0e0; font-weight: bold;">Location:</td>
+            <td style="padding: 10px; border: 1px solid #e0e0e0;">${clinicAddress || "Address not provided"}</td>
+          </tr>
+        </table>
+        <p style="font-size: 16px; color: #333;">
+          Please arrive 15 minutes early and bring your ID and insurance card. If you need to reschedule or cancel, contact us at least 24 hours in advance at <a href="tel:${receptionNumber}">${receptionNumber}</a>.
+        </p>
+        <p style="font-size: 16px; color: #333;">
+          Thank you for choosing our practice. We look forward to serving you.
+        </p>
+        <p style="font-size: 16px; color: #333;">
+          Best regards,<br />
+          Your Healthcare Team
+        </p>
+      </div>
+      <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 0 0 8px 8px; font-size: 14px; color: #666;">
+        <p style="margin: 0;">1234 Main Street, Oak Grove, FL 00009 | (555) 123-4567</p>
+      </div>
+    </div>
+  `;
+};
 
 exports.getDoctors = async (req, res) => {
   try {
@@ -132,8 +192,8 @@ exports.bookAppointment = async (req, res) => {
       });
     }
 
-    // Check if the slot is in the past (current time: June 21, 2025, 14:04 IST)
-    const currentTime = new Date("2025-06-21T14:04:00+05:30");
+    // Check if the slot is in the past (current time: June 23, 2025, 11:47 IST)
+    const currentTime = new Date(); // Dynamic time
     const slotDateTime = parse(
       `${date} ${time}`,
       "yyyy-MM-dd HH:mm",
@@ -198,6 +258,35 @@ exports.bookAppointment = async (req, res) => {
       status: "confirmed",
     });
     await appointment.save();
+
+    // Send confirmation email
+    try {
+      const patientName = `${patient.firstName} ${patient.lastName}`;
+      const emailContent = createAppointmentEmail(
+        patientName,
+        {
+          firstName: doctor.firstName,
+          lastName: doctor.lastName,
+          specialty: doctor.specialty,
+        },
+        date,
+        time,
+        doctor.clinicAddress,
+        doctor.receptionNumber
+      );
+
+      await transporter.sendMail({
+        from: `"Healthcare Team" <${process.env.EMAIL_USER}>`,
+        to: patient.email,
+        subject: `Appointment Confirmation with Dr. ${doctor.firstName} ${doctor.lastName} on ${format(new Date(date), "MMMM d, yyyy")}`,
+        html: emailContent,
+      });
+
+      console.log(`Confirmation email sent to ${patient.email}`);
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+      // Don't fail the booking if email fails
+    }
 
     res.status(201).json({
       success: true,
