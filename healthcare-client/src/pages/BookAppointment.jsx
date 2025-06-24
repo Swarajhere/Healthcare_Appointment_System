@@ -31,12 +31,8 @@ const BookAppointment = () => {
   const { doctors, availability, loading, error } = useSelector(
     (state) => state.appointment
   );
-  // Initialize selectedDate to tomorrow
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0); // Reset time to midnight
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(tomorrow);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -125,14 +121,6 @@ const BookAppointment = () => {
   const selectedDoctor = doctors.find((doc) => doc.id === selectedDoctorId);
   const availabilityData = availability[`${selectedDoctorId}_${selectedDate.toISOString().split("T")[0]}`] || {};
   const slots = availabilityData.slots || [];
-
-  // Calculate minDate (tomorrow) and maxDate (14 days from tomorrow)
-  const minDate = new Date();
-  minDate.setDate(minDate.getDate() + 1);
-  minDate.setHours(0, 0, 0, 0);
-  const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 14);
-  maxDate.setHours(0, 0, 0, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -321,8 +309,6 @@ const BookAppointment = () => {
                 <DatePicker
                   selectedDate={selectedDate}
                   onSelectDate={handleSelectDate}
-                  minDate={minDate}
-                  maxDate={maxDate}
                 />
               </div>
 

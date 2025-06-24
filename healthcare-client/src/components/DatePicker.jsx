@@ -2,14 +2,9 @@ import React from "react";
 import { Calendar } from "lucide-react";
 import { format, addDays, isSameDay } from "date-fns";
 
-const DatePicker = ({ selectedDate, onSelectDate, minDate, maxDate }) => {
-  // Generate dates from minDate to maxDate (tomorrow to 14 days from tomorrow)
-  const dates = [];
-  let currentDate = new Date(minDate);
-  while (currentDate <= maxDate) {
-    dates.push(new Date(currentDate));
-    currentDate = addDays(currentDate, 1);
-  }
+const DatePicker = ({ selectedDate, onSelectDate }) => {
+  const today = new Date();
+  const dates = Array.from({ length: 14 }, (_, i) => addDays(today, i));
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
