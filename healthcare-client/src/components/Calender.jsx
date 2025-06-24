@@ -2,20 +2,26 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const Calendar = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  // Initialize selectedDate to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0); // Reset time to midnight
+  const [selectedDate, setSelectedDate] = useState(tomorrow);
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [userDetails, setUserDetails] = useState({ name: '', email: '' });
   const [bookingStatus, setBookingStatus] = useState(null);
 
-  // Generate next 7 days
-  const getNextSevenDays = () => {
+  // Generate next 14 days starting from tomorrow
+  const getNextFourteenDays = () => {
     const days = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 1; i <= 14; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
+      date.setHours(0, 0, 0, 0); // Reset time to midnight
       days.push(date);
     }
+    console.log('Next 14 days:', days);
     return days;
   };
 
@@ -89,7 +95,7 @@ const Calendar = () => {
 
       {/* Date Selection */}
       <div className="flex space-x-2 mb-4 overflow-x-auto">
-        {getNextSevenDays().map((date, index) => (
+        {getNextFourteenDays().map((date, index) => (
           <button
             key={index}
             onClick={() => setSelectedDate(date)}
