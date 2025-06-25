@@ -23,7 +23,10 @@ const appointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["confirmed", "pending", "cancelled"],
+    enum: {
+      values: ["confirmed", "pending", "completed", "cancelled"],
+      message: "`{VALUE}` is not a valid enum value for path `{PATH}`.",
+    },
     default: "confirmed",
   },
   createdAt: {

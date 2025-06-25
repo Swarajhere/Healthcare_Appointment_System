@@ -106,3 +106,25 @@ export const updateDoctorHours = async (doctorId, date, start, end) => {
     throw new Error(error.response?.data?.message || "Failed to update doctor hours");
   }
 };
+
+export const markAppointmentCompleted = async (appointmentId, doctorId) => {
+  try {
+    const token = localStorage.getItem("token");
+    console.log(`Marking appointment completed: ID=${appointmentId}, doctorId=${doctorId}, token: ${token}`);
+    const response = await axios.post(
+      `${API_URL}/appointments/complete/${appointmentId}`,
+      { doctorId },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log("Appointment marked completed:", response.data);
+    return response.data.appointment;
+  } catch (error) {
+    console.error("markAppointmentCompleted error:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Failed to mark appointment as completed");
+  }
+};

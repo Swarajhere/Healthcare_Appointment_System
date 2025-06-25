@@ -1,13 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getDoctors, getAvailability, bookAppointment, getDoctorAppointments, updateDoctorHours, getPatientAppointments } from "../../api/appointments";
-
+import { getDoctors, getAvailability, bookAppointment, getDoctorAppointments, updateDoctorHours, getPatientAppointments, markAppointmentCompleted } from "../../api/appointments";
 
 export const fetchDoctors = createAsyncThunk(
   "appointment/fetchDoctors",
   async (_, { rejectWithValue }) => {
     try {
       const doctors = await getDoctors();
-      console.log('redux00', doctors);
       return doctors;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -75,6 +73,18 @@ export const updateDoctorHoursThunk = createAsyncThunk(
   }
 );
 
+export const markAppointmentCompletedThunk = createAsyncThunk(
+  "appointment/markAppointmentCompleted",
+  async ({ appointmentId, doctorId }, { rejectWithValue }) => {
+    try {
+      const updatedAppointment = await markAppointmentCompleted(appointmentId, doctorId);
+      return updatedAppointment;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const appointmentSlice = createSlice({
   name: "appointment",
   initialState: {
@@ -106,8 +116,8 @@ const appointmentSlice = createSlice({
       })
       .addCase(fetchAvailability.fulfilled, (state, action) => {
         state.loading = false;
-        const { doctorId, date, slots, start, end } = action.payload;
-        state.availability[`${doctorId}_${date}`] = { slots, start, end };
+        const { doctorId, date, slots } = action.payload;
+        state.availability[`${doctorId}_${date}`] = { slots };
       })
       .addCase(fetchAvailability.rejected, (state, action) => {
         state.loading = false;
@@ -148,6 +158,24 @@ const appointmentSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(markAppointmentCompletedThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(markAppointmentCompletedThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedAppointment = action.payload;
+        const index = state.appointments.findIndex(
+          (apt) => apt.id === updatedAppointment.id
+        );
+        if (index !== -1) {
+          state.appointments[index] = updatedAppointment;
+        }
+      })
+      .addCase(markAppointmentCompletedThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 

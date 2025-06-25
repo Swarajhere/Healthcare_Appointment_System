@@ -9,7 +9,7 @@ export default defineConfig({
     , tailwindcss()],
   define: {
     'process.env': {
-      REACT_APP_API_URL: JSON.stringify(process.env.REACT_APP_API_URL) || 'http://localhost:3000/api'
+      REACT_APP_API_URL: JSON.stringify('http://localhost:3000/api')
     }
   },
 })

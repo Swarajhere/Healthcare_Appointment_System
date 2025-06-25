@@ -4,6 +4,7 @@ const Availability = require("../models/availabilityModel");
 const { generateSlots } = require("../utils/generateSlots");
 const { addDays, format, parse, isBefore, addMinutes } = require("date-fns");
 const nodemailer = require("nodemailer");
+const cron = require("node-cron");
 require("dotenv").config();
 
 // Nodemailer transporter setup
@@ -16,8 +17,36 @@ const transporter = nodemailer.createTransport({
 });
 
 // Email template function
-const createAppointmentEmail = (patientName, doctor, date, time, clinicAddress, receptionNumber) => {
+const createAppointmentEmail = (patientName, doctor, date, time, clinicAddress, receptionNumber, isCancellation = false) => {
   const formattedDate = format(new Date(date), "EEEE, MMMM d, yyyy");
+  if (isCancellation) {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <div style="text-align: center; background-color: #dc3545; color: white; padding: 15px; border-radius: 8px 8px 0 0;">
+          <h1 style="margin: 0; font-size: 24px;">Appointment Cancellation</h1>
+        </div>
+        <div style="padding: 20px;">
+          <p style="font-size: 16px; color: #333;">Dear ${patientName},</p>
+          <p style="font-size: 16px; color: #333;">
+            Your appointment with <strong>Dr. ${doctor.firstName} ${doctor.lastName}</strong> on ${formattedDate} at ${time} has been cancelled as it was not marked as completed by the end of the day.
+          </p>
+          <p style="font-size: 16px; color: #333;">
+            If you need to reschedule, please contact us at <a href="tel:${receptionNumber}">${receptionNumber}</a> or book a new appointment through our portal.
+          </p>
+          <p style="font-size: 16px; color: #333;">
+            We apologize for any inconvenience. Thank you for choosing our practice.
+          </p>
+          <p style="font-size: 16px; color: #333;">
+            Best regards,<br />
+            Your Healthcare Team
+          </p>
+        </div>
+        <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 0 0 8px 8px; font-size: 14px; color: #666;">
+          <p style="margin: 0;">1234 Main Street, Oak Grove, FL 00009 | ${receptionNumber}</p>
+        </div>
+      </div>
+    `;
+  }
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
       <div style="text-align: center; background-color: #007bff; color: white; padding: 15px; border-radius: 8px 8px 0 0;">
@@ -42,7 +71,7 @@ const createAppointmentEmail = (patientName, doctor, date, time, clinicAddress, 
             <td style="padding: 10px; border: 1px solid #e0e0e0;">${time}</td>
           </tr>
           <tr>
-            <td style="padding:1 0px; border: 1px solid #e0e0e0; font-weight: bold;">Location:</td>
+            <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold;">Location:</td>
             <td style="padding: 10px; border: 1px solid #e0e0e0;">${clinicAddress || "Address not provided"}</td>
           </tr>
         </table>
@@ -58,7 +87,7 @@ const createAppointmentEmail = (patientName, doctor, date, time, clinicAddress, 
         </p>
       </div>
       <div style="text-align: center; background-color: #f8f9fa; padding: 10px; border-radius: 0 0 8px 8px; font-size: 14px; color: #666;">
-        <p style="margin: 0;">1234 Main Street, Oak Grove, FL 00009 | (555) 123-4567</p>
+        <p style="margin: 0;">1234 Main Street, Oak Grove, FL 00009 | ${receptionNumber}</p>
       </div>
     </div>
   `;
@@ -78,7 +107,7 @@ exports.getDoctors = async (req, res) => {
     }
 
     const doctors = await User.find(query).select(
-      "_id firstName lastName specialty yearsOfExperience clinicAddress"
+      "_id firstName lastName specialty yearsOfExperience clinicAddress receptionNumber"
     );
 
     res.status(200).json({
@@ -90,6 +119,7 @@ exports.getDoctors = async (req, res) => {
         specialty: doc.specialty,
         yearsOfExperience: doc.yearsOfExperience ?? 0,
         clinicAddress: doc.clinicAddress,
+        receptionNumber: doc.receptionNumber,
       })),
     });
   } catch (error) {
@@ -192,8 +222,8 @@ exports.bookAppointment = async (req, res) => {
       });
     }
 
-    // Check if the slot is in the past (current time: June 23, 2025, 11:47 IST)
-    const currentTime = new Date(); // Dynamic time
+    // Check if the slot is in the past (current time: June 25, 2025, 00:00 IST)
+    const currentTime = new Date();
     const slotDateTime = parse(
       `${date} ${time}`,
       "yyyy-MM-dd HH:mm",
@@ -328,7 +358,7 @@ exports.getDoctorAppointments = async (req, res) => {
 
     const appointments = await Appointment.find({
       doctorId,
-      status: "confirmed",
+      status: { $in: ["confirmed", "completed"] }, // Include both statuses
     })
       .populate("patientId", "firstName lastName")
       .sort({ date: 1, time: 1 });
@@ -468,3 +498,161 @@ exports.updateDoctorHours = async (req, res) => {
     });
   }
 };
+
+exports.markAppointmentCompleted = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { doctorId } = req.body;
+
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      doctorId,
+      status: "confirmed",
+    });
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found or not eligible for completion",
+      });
+    }
+
+    appointment.status = "completed";
+    await appointment.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Appointment marked as completed",
+      appointment: {
+        id: appointment._id.toString(),
+        date: appointment.date,
+        time: appointment.time,
+        patientName: appointment.patientId, // Will be populated in frontend
+        status: appointment.status,
+      },
+    });
+  } catch (error) {
+    console.error("Error in markAppointmentCompleted:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to mark appointment as completed",
+    });
+  }
+};
+
+// Cron job to cancel and delete uncompleted appointments at midnight
+cron.schedule("0 0 * * *", async () => {
+  try {
+    const currentDate = format(new Date(), "yyyy-MM-dd");
+    console.log(`Running cron job to cancel appointments for ${currentDate}`);
+
+    const appointments = await Appointment.find({
+      date: currentDate,
+      status: "confirmed",
+    }).populate("patientId", "firstName lastName email").populate("doctorId", "firstName lastName specialty receptionNumber");
+
+    if (appointments.length === 0) {
+      console.log("No confirmed appointments to cancel for today.");
+      return;
+    }
+
+    for (const appointment of appointments) {
+      // Send cancellation email
+      try {
+        const patientName = `${appointment.patientId.firstName} ${appointment.patientId.lastName}`;
+        const emailContent = createAppointmentEmail(
+          patientName,
+          {
+            firstName: appointment.doctorId.firstName,
+            lastName: appointment.doctorId.lastName,
+            specialty: appointment.doctorId.specialty,
+          },
+          appointment.date,
+          appointment.time,
+          appointment.doctorId.clinicAddress,
+          appointment.doctorId.receptionNumber,
+          true
+        );
+
+        await transporter.sendMail({
+          from: `"Healthcare Team" <${process.env.EMAIL_USER}>`,
+          to: appointment.patientId.email,
+          subject: `Appointment Cancellation with Dr. ${appointment.doctorId.firstName} ${appointment.doctorId.lastName} on ${format(new Date(appointment.date), "MMMM d, yyyy")}`,
+          html: emailContent,
+        });
+
+        console.log(`Cancellation email sent to ${appointment.patientId.email}`);
+      } catch (emailError) {
+        console.error(`Error sending cancellation email to ${appointment.patientId.email}:`, emailError);
+      }
+
+      // Delete the appointment
+      await Appointment.deleteOne({ _id: appointment._id });
+      console.log(`Deleted appointment ${appointment._id} for ${patientName}`);
+    }
+
+    console.log(`Successfully processed ${appointments.length} cancellations for ${currentDate}`);
+  } catch (error) {
+    console.error("Error in cron job for cancelling appointments:", error);
+  }
+}, {
+  timezone: "Asia/Kolkata",
+});
+exports.cancelAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { doctorId } = req.body;
+
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      doctorId,
+      status: "confirmed",
+    });
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found or not eligible for cancellation",
+      });
+    }
+
+    // Send cancellation email
+    try {
+      const patient = await User.findById(appointment.patientId);
+      const patientName = `${patient.firstName} ${patient.lastName}`; 
+      const emailContent = createAppointmentEmail(
+        patientName,
+        {
+          firstName: appointment.doctorId.firstName,
+          lastName: appointment.doctorId.lastName,
+          specialty: appointment.doctorId.specialty,
+        },
+        appointment.date,
+        appointment.time,
+        appointment.doctorId.clinicAddress,
+        appointment.doctorId.receptionNumber,
+        true
+      );  
+      await transporter.sendMail({
+        from: `"Healthcare Team" <${process.env.EMAIL_USER}>`,
+        to: patient.email,
+        subject: `Appointment Cancellation with Dr. ${appointment.doctorId.firstName} ${appointment.doctorId.lastName} on ${format(new Date(appointment.date), "MMMM d, yyyy")}`,
+        html: emailContent,
+      });
+      console.log(`Cancellation email sent to ${patient.email}`);
+    } catch (emailError) {  
+      console.error(`Error sending cancellation email to patient:`, emailError);
+    } 
+    // Delete the appointment
+    await Appointment.deleteOne({ _id: appointment._id });
+    console.log(`Deleted appointment ${appointment._id}`);  
+    res.status(200).json({
+      success: true,
+      message: "Appointment cancelled successfully",
+    });
+  } catch (error) {
+    console.error("Error in cancelAppointment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  } 
+}

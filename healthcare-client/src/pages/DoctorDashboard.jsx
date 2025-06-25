@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchDoctorAppointments,
   updateDoctorHoursThunk,
+  markAppointmentCompletedThunk, // New thunk
 } from "../redux/slice/appointmentSlice";
 import {
   Stethoscope,
@@ -47,67 +48,37 @@ const DoctorDashboard = () => {
   const currentTime = new Date();
   const currentDate = format(currentTime, "yyyy-MM-dd");
 
-  // Separate completed and upcoming appointments
+  // Filter for completed and upcoming appointments
   const completedAppointments = appointments.filter((apt) => {
-    const aptDateTime = parse(
-      `${apt.date} ${apt.time}`,
-      "yyyy-MM-dd HH:mm",
-      new Date()
-    );
-    return (
-      isBefore(new Date(apt.date), new Date(currentDate)) ||
-      (apt.date === currentDate && isBefore(aptDateTime, currentTime))
-    );
+    return apt.status === "completed";
   });
 
   const upcomingAppointments = appointments.filter((apt) => {
-    const aptDateTime = parse(
-      `${apt.date} ${apt.time}`,
-      "yyyy-MM-dd HH:mm",
-      new Date()
-    );
-    return (
-      apt.date > currentDate ||
-      (apt.date === currentDate && !isBefore(aptDateTime, currentTime))
-    );
+    return apt.status === "confirmed" && apt.date === currentDate;
   });
 
   // Calculate statistics
   const totalAppointments = appointments.length;
-  const todayAppointments = appointments.filter(
-    (apt) => apt.date === currentDate
-  ).length;
+  const todayAppointments = upcomingAppointments.length;
   const completedAppointmentsCount = completedAppointments.length;
-  const pendingAppointments = upcomingAppointments.filter(
-    (apt) => apt.status === "confirmed"
-  ).length;
+  const pendingAppointments = upcomingAppointments.length;
 
-  const getStatusIcon = (status, isCompleted) => {
-    if (isCompleted) {
-      return <CheckCircle className="h-4 w-4" />;
-    }
+  const getStatusIcon = (status) => {
     switch (status.toLowerCase()) {
       case "completed":
         return <CheckCircle className="h-4 w-4" />;
-      case "cancelled":
-        return <XCircle className="h-4 w-4" />;
-      case "scheduled":
+      case "confirmed":
         return <Clock className="h-4 w-4" />;
       default:
         return <AlertTriangle className="h-4 w-4" />;
     }
   };
 
-  const getStatusColor = (status, isCompleted) => {
-    if (isCompleted) {
-      return "bg-green-100 text-green-800 border-green-200";
-    }
+  const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "completed":
         return "bg-green-100 text-green-800 border-green-200";
-      case "cancelled":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "scheduled":
+      case "confirmed":
         return "bg-blue-100 text-blue-800 border-blue-200";
       default:
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
@@ -161,6 +132,18 @@ const DoctorDashboard = () => {
     }
   };
 
+  const handleMarkCompleted = async (appointmentId) => {
+    try {
+      await dispatch(
+        markAppointmentCompletedThunk({ appointmentId, doctorId: user.id })
+      ).unwrap();
+      toast.success("Appointment marked as completed");
+      dispatch(fetchDoctorAppointments(user.id)); // Refresh appointments
+    } catch (err) {
+      toast.error(err.message || "Failed to mark appointment as completed");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header Section */}
@@ -175,9 +158,7 @@ const DoctorDashboard = () => {
                 <h1 className="text-4xl font-bold text-gray-900 mb-1">
                   Welcome back, Dr. {user?.firstName}
                 </h1>
-                <p className="text-gray-600 text-lg">
-                  Here's an overview of your appointments
-                </p>
+                <p className="text-gray-600 text-lg">Today's appointments</p>
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full">
@@ -377,7 +358,7 @@ const DoctorDashboard = () => {
             <div className="flex items-center space-x-3">
               <Calendar className="h-6 w-6 text-white" />
               <h2 className="text-2xl font-bold text-white">
-                Upcoming Appointments
+                Today's Appointments
               </h2>
             </div>
           </div>
@@ -399,10 +380,10 @@ const DoctorDashboard = () => {
                     <Users className="h-12 w-12 text-gray-400" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    No Upcoming Appointments
+                    No Appointments Today
                   </h3>
                   <p className="text-gray-600 text-lg leading-relaxed">
-                    You don't have any upcoming appointments at the moment. New
+                    You don't have any appointments scheduled for today. New
                     appointments will appear here once patients book with you.
                   </p>
                 </div>
@@ -446,13 +427,20 @@ const DoctorDashboard = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={appointment.status === "completed"}
+                          onChange={() => handleMarkCompleted(appointment.id)}
+                          disabled={appointment.status === "completed"}
+                          className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                          title="Mark as completed"
+                        />
                         <div
                           className={`flex items-center space-x-2 px-4 py-2 rounded-full border font-medium text-sm ${getStatusColor(
-                            appointment.status,
-                            false
+                            appointment.status
                           )}`}
                         >
-                          {getStatusIcon(appointment.status, false)}
+                          {getStatusIcon(appointment.status)}
                           <span className="capitalize">
                             {appointment.status}
                           </span>
@@ -542,11 +530,10 @@ const DoctorDashboard = () => {
                       <div className="flex items-center space-x-3">
                         <div
                           className={`flex items-center space-x-2 px-4 py-2 rounded-full border font-medium text-sm ${getStatusColor(
-                            appointment.status,
-                            true
+                            appointment.status
                           )}`}
                         >
-                          {getStatusIcon(appointment.status, true)}
+                          {getStatusIcon(appointment.status)}
                           <span className="capitalize">Completed</span>
                         </div>
                       </div>
