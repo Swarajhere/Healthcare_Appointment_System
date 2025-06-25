@@ -128,3 +128,20 @@ export const markAppointmentCompleted = async (appointmentId, doctorId) => {
     throw new Error(error.response?.data?.message || "Failed to mark appointment as completed");
   }
 };
+
+export const deleteAppointment = async (appointmentId) => {
+  try {
+    const token = localStorage.getItem("token");
+    console.log(`Deleting appointment: ID=${appointmentId}, token: ${token}`);
+    const response = await axios.delete(`${API_URL}/appointments/${appointmentId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("Appointment deleted:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("deleteAppointment error:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Failed to delete appointment");
+  }
+};

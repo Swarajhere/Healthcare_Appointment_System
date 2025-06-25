@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getDoctors, getAvailability, bookAppointment, getDoctorAppointments, updateDoctorHours, getPatientAppointments, markAppointmentCompleted } from "../../api/appointments";
+import { getDoctors, getAvailability, bookAppointment, getDoctorAppointments, updateDoctorHours, getPatientAppointments, markAppointmentCompleted, deleteAppointment } from "../../api/appointments";
 
 export const fetchDoctors = createAsyncThunk(
   "appointment/fetchDoctors",
@@ -79,6 +79,18 @@ export const markAppointmentCompletedThunk = createAsyncThunk(
     try {
       const updatedAppointment = await markAppointmentCompleted(appointmentId, doctorId);
       return updatedAppointment;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteAppointmentThunk = createAsyncThunk(
+  "appointment/deleteAppointment",
+  async (appointmentId, { rejectWithValue }) => {
+    try {
+      const response = await deleteAppointment(appointmentId); // Use the service
+      return appointmentId;
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -173,6 +185,20 @@ const appointmentSlice = createSlice({
         }
       })
       .addCase(markAppointmentCompletedThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(deleteAppointmentThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteAppointmentThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.patientAppointments = state.patientAppointments.filter(
+          (appt) => appt.id !== action.payload
+        );
+      })
+      .addCase(deleteAppointmentThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

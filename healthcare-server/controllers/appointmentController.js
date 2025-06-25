@@ -93,6 +93,113 @@ const createAppointmentEmail = (patientName, doctor, date, time, clinicAddress, 
   `;
 };
 
+exports.deleteAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { id: patientId } = req.user; // From verifyToken middleware
+    console.log(`Deleting appointment: ID=${appointmentId}, patientId=${patientId}`);
+
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      patientId,
+      status: "confirmed",
+    });
+
+    if (!appointment) {
+      console.log(`Appointment not found or not eligible: ID=${appointmentId}`);
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found or not eligible for deletion",
+      });
+    }
+
+    // Check if deletion is allowed (before or on appointment day until midnight IST)
+    const apptDate = parse(appointment.date, "yyyy-MM-dd", new Date());
+    const apptMidnight = new Date(apptDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+    const currentDateTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const currentIST = new Date(currentDateTime);
+
+    if (currentIST > apptMidnight) {
+      console.log(`Deletion not allowed after midnight on ${appointment.date}`);
+      return res.status(403).json({
+        success: false,
+        message: "Cannot delete appointment after midnight on the appointment day",
+      });
+    }
+
+    await Appointment.deleteOne({ _id: appointmentId });
+    console.log(`Appointment ${appointmentId} deleted`);
+
+    res.status(200).json({
+      success: true,
+      message: "Appointment deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error in deleteAppointment:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to delete appointment",
+    });
+  }
+};
+
+// Updated cron job to delete unattended appointments
+cron.schedule("0 0 * * *", async () => {
+  try {
+    const currentDate = format(new Date(), "yyyy-MM-dd");
+    console.log(`Running cron job to delete unattended appointments for ${currentDate}`);
+
+    const appointments = await Appointment.find({
+      date: currentDate,
+      status: { $in: ["confirmed", "pending"] },
+    }).populate("patientId", "firstName lastName email").populate("doctorId", "firstName lastName specialty receptionNumber");
+
+    if (appointments.length === 0) {
+      console.log("No unattended appointments to delete for today.");
+      return;
+    }
+
+    for (const appointment of appointments) {
+      try {
+        const patientName = `${appointment.patientId.firstName} ${appointment.patientId.lastName}`;
+        const emailContent = createAppointmentEmail(
+          patientName,
+          {
+            firstName: appointment.doctorId.firstName,
+            lastName: appointment.doctorId.lastName,
+            specialty: appointment.doctorId.specialty,
+          },
+          appointment.date,
+          appointment.time,
+          appointment.doctorId.clinicAddress,
+          appointment.doctorId.receptionNumber,
+          true
+        );
+
+        await transporter.sendMail({
+          from: `"Healthcare Team" <${process.env.EMAIL_USER}>`,
+          to: appointment.patientId.email,
+          subject: `Appointment Cancellation with Dr. ${appointment.doctorId.firstName} ${appointment.doctorId.lastName} on ${format(new Date(appointment.date), "MMMM d, yyyy")}`,
+          html: emailContent,
+        });
+
+        console.log(`Cancellation email sent to ${appointment.patientId.email}`);
+      } catch (emailError) {
+        console.error(`Error sending cancellation email to ${appointment.patientId.email}:`, emailError);
+      }
+
+      await Appointment.deleteOne({ _id: appointment._id });
+      console.log(`Deleted unattended appointment ${appointment._id} for ${patientName}`);
+    }
+
+    console.log(`Successfully deleted ${appointments.length} unattended appointments for ${currentDate}`);
+  } catch (error) {
+    console.error("Error in cron job for deleting unattended appointments:", error);
+  }
+}, {
+  timezone: "Asia/Kolkata",
+});
+
 exports.getDoctors = async (req, res) => {
   try {
     const { specialty, search } = req.query;
